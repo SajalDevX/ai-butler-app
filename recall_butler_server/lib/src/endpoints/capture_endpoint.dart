@@ -53,16 +53,20 @@ class CaptureEndpoint extends Endpoint {
     capture.processingStatus = 'processing';
     capture = await Capture.db.updateRow(session, capture);
 
-    // Process with AI synchronously (wait for completion)
-    capture = await _processWithAI(session, capture);
+    // Process with AI asynchronously (don't wait - return immediately)
+    // ignore: unawaited_futures
+    _processWithAIAsync(session, capture);
 
     return capture;
   }
 
-  /// Process capture with Gemini AI synchronously
-  Future<Capture> _processWithAI(Session session, Capture capture) async {
+  /// Process capture with Gemini AI asynchronously (fire and forget)
+  Future<void> _processWithAIAsync(Session session, Capture capture) async {
+    // Create a new session for background processing
+    final bgSession = await session.serverpod.createSession(enableLogging: true);
+
     try {
-      final result = await GeminiService.processCapture(session, capture);
+      final result = await GeminiService.processCapture(bgSession, capture);
 
       capture.extractedText = result.extractedText;
       capture.aiSummary = result.description;
@@ -71,17 +75,55 @@ class CaptureEndpoint extends Endpoint {
       capture.isReminder = result.isReminder;
       capture.processingStatus = 'completed';
 
-      capture = await Capture.db.updateRow(session, capture);
-      session.log('AI processing completed for capture ${capture.id}');
+      capture = await Capture.db.updateRow(bgSession, capture);
+      bgSession.log('AI processing completed for capture ${capture.id}');
+
+      // Auto-extract and create actions from the capture
+      await _extractAndCreateActions(bgSession, capture);
     } catch (e, stackTrace) {
-      session.log('AI processing failed: $e\n$stackTrace', level: LogLevel.error);
+      bgSession.log('AI processing failed: $e\n$stackTrace', level: LogLevel.error);
 
       // Update status to failed
       capture.processingStatus = 'failed';
-      capture = await Capture.db.updateRow(session, capture);
+      await Capture.db.updateRow(bgSession, capture);
+    } finally {
+      await bgSession.close();
     }
+  }
 
-    return capture;
+  /// Extract actions from capture and create them automatically
+  Future<void> _extractAndCreateActions(Session session, Capture capture) async {
+    try {
+      final actionItems = await GeminiService.extractActions(session, capture);
+
+      if (actionItems.isEmpty) {
+        session.log('No actions extracted from capture ${capture.id}');
+        return;
+      }
+
+      final userId = await _getUserId(session);
+
+      for (final item in actionItems) {
+        final action = Action(
+          userId: userId,
+          captureId: capture.id,
+          type: item['type'] ?? 'task',
+          title: item['title'] ?? '',
+          notes: item['notes'],
+          dueAt: item['dueAt'] != null ? DateTime.tryParse(item['dueAt']) : null,
+          isCompleted: false,
+          priority: item['priority'] ?? 'medium',
+          createdAt: DateTime.now(),
+        );
+
+        if (action.title.isNotEmpty) {
+          await Action.db.insertRow(session, action);
+          session.log('Created action: ${action.title} from capture ${capture.id}');
+        }
+      }
+    } catch (e) {
+      session.log('Failed to extract actions: $e', level: LogLevel.warning);
+    }
   }
 
   /// Get all captures for the current user

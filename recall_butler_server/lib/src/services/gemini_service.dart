@@ -9,6 +9,7 @@ class GeminiService {
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
   static const String _model = 'gemini-2.5-flash';
+  static const int _maxRetries = 3;
 
   /// Process a capture with Gemini AI
   static Future<AIProcessingResult> processCapture(
@@ -326,6 +327,139 @@ Return only a JSON array of the indices in order of relevance, e.g.: [2, 0, 1, 3
     return List.generate(captures.length, (i) => i);
   }
 
+  /// Generate morning briefing summary
+  static Future<String> generateMorningBriefing(
+    Session session,
+    List<Action> todayActions,
+    List<Capture> recentCaptures,
+  ) async {
+    final apiKey = session.passwords['geminiApiKey'];
+    if (apiKey == null) {
+      return 'Good morning! You have ${todayActions.length} tasks today.';
+    }
+
+    final actionsSummary = todayActions.isEmpty
+        ? 'No tasks scheduled for today.'
+        : todayActions.map((a) => '- ${a.title} (${a.priority} priority)').join('\n');
+
+    final capturesSummary = recentCaptures.isEmpty
+        ? 'No recent captures.'
+        : recentCaptures.map((c) => '- ${c.aiSummary ?? c.type}').join('\n');
+
+    final prompt = '''
+Generate a brief, friendly morning briefing like a butler would give. Include:
+1. A warm greeting
+2. Quick summary of today's tasks
+3. Any highlights from recent captures
+
+Today's tasks:
+$actionsSummary
+
+Recent captures (last 24h):
+$capturesSummary
+
+Keep it to 2-3 sentences, warm and helpful. Don't use bullet points.
+''';
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.7,
+            'maxOutputTokens': 256,
+          }
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['candidates'][0]['content']['parts'][0]['text'];
+      }
+    } catch (e) {
+      // Fall back to generic message
+    }
+
+    return 'Good morning! You have ${todayActions.length} tasks today and ${recentCaptures.length} recent captures.';
+  }
+
+  /// Extract action items from capture content
+  static Future<List<Map<String, dynamic>>> extractActions(
+    Session session,
+    Capture capture,
+  ) async {
+    final apiKey = session.passwords['geminiApiKey'];
+    if (apiKey == null) {
+      return [];
+    }
+
+    final content = capture.extractedText ?? capture.aiSummary ?? '';
+    if (content.isEmpty) {
+      return [];
+    }
+
+    final prompt = '''
+Analyze this content and extract any action items, tasks, reminders, or events.
+
+Content: "$content"
+Category: ${capture.category}
+
+Return a JSON array of action items. Each item should have:
+{
+  "type": "task" | "reminder" | "event" | "shopping",
+  "title": "Brief action description",
+  "notes": "Additional details if any",
+  "dueAt": "ISO date string if a date/time is mentioned, null otherwise",
+  "priority": "low" | "medium" | "high"
+}
+
+Only extract clear, actionable items. If there are no actions, return an empty array [].
+Be conservative - only extract items that are clearly actionable.
+''';
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.1,
+            'maxOutputTokens': 512,
+          }
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final text = data['candidates'][0]['content']['parts'][0]['text'];
+        final cleanedText = _extractJson(text);
+        final actions = jsonDecode(cleanedText);
+        if (actions is List) {
+          return actions.cast<Map<String, dynamic>>();
+        }
+      }
+    } catch (e) {
+      // Fall back to empty list
+    }
+
+    return [];
+  }
+
   /// Generate weekly digest summary
   static Future<String> generateWeeklyDigest(
     Session session,
@@ -384,14 +518,35 @@ Be conversational and helpful, like a butler summarizing the week.
     String apiKey,
     Map<String, dynamic> requestBody,
   ) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    );
+    http.Response? response;
 
-    if (response.statusCode != 200) {
+    // Retry logic with exponential backoff for 503 errors
+    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+      response = await http.post(
+        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        break; // Success, exit retry loop
+      }
+
+      // If 503 or 429 (rate limit), wait and retry
+      if (response.statusCode == 503 || response.statusCode == 429) {
+        if (attempt < _maxRetries - 1) {
+          // Exponential backoff: 2s, 4s, 8s
+          await Future.delayed(Duration(seconds: 2 << attempt));
+          continue;
+        }
+      }
+
+      // For other errors, throw immediately
       throw Exception('Gemini API error: ${response.statusCode}');
+    }
+
+    if (response == null || response.statusCode != 200) {
+      throw Exception('Gemini API error after $_maxRetries retries: ${response?.statusCode}');
     }
 
     final data = jsonDecode(response.body);

@@ -6,6 +6,7 @@ import 'package:iconsax/iconsax.dart';
 
 import 'providers/capture_provider.dart';
 import 'screens/capture/capture_modal.dart';
+import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -38,6 +39,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
 
   final _screens = const [
+    DashboardScreen(),
     HomeScreen(),
     SearchScreen(),
     SizedBox(), // Placeholder for FAB
@@ -63,8 +65,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           case 'photo':
           case 'voice':
           case 'link':
-            // Navigate to home and show capture modal
-            setState(() => _currentIndex = 0);
+            // Navigate to captures and show capture modal
+            setState(() => _currentIndex = 1);
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) showCaptureModal(context);
             });
@@ -140,8 +142,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             duration: const Duration(seconds: 2),
           ),
         );
-        // Navigate to home to show the new capture
-        setState(() => _currentIndex = 0);
+        // Navigate to captures to show the new capture
+        setState(() => _currentIndex = 1);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -190,28 +192,34 @@ class _AppShellState extends ConsumerState<AppShell> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _NavItem(
-                icon: Iconsax.home_2,
-                activeIcon: Iconsax.home_25,
-                label: 'Home',
+                icon: Iconsax.chart_2,
+                activeIcon: Iconsax.chart_21,
+                label: 'Dashboard',
                 isSelected: _currentIndex == 0,
                 onTap: () => setState(() => _currentIndex = 0),
               ),
               _NavItem(
-                icon: Iconsax.search_normal,
-                activeIcon: Iconsax.search_normal_1,
-                label: 'Search',
+                icon: Iconsax.home_2,
+                activeIcon: Iconsax.home_25,
+                label: 'Captures',
                 isSelected: _currentIndex == 1,
                 onTap: () => setState(() => _currentIndex = 1),
               ),
               const SizedBox(width: 48), // Space for FAB
               _NavItem(
+                icon: Iconsax.search_normal,
+                activeIcon: Iconsax.search_normal_1,
+                label: 'Search',
+                isSelected: _currentIndex == 2,
+                onTap: () => setState(() => _currentIndex = 2),
+              ),
+              _NavItem(
                 icon: Iconsax.setting_2,
                 activeIcon: Iconsax.setting_25,
                 label: 'Settings',
-                isSelected: _currentIndex == 3,
-                onTap: () => setState(() => _currentIndex = 3),
+                isSelected: _currentIndex == 4,
+                onTap: () => setState(() => _currentIndex = 4),
               ),
-              const SizedBox(width: 8),
             ],
           ),
         ),

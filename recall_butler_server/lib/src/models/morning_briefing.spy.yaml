@@ -1,0 +1,12 @@
+### Morning briefing response model
+
+class: MorningBriefing
+fields:
+  greeting: String
+  date: DateTime
+  todayActionCount: int
+  overdueActionCount: int
+  recentCaptureCount: int
+  aiSummary: String?
+  todayActionTitles: List<String>
+  overdueActionTitles: List<String>
