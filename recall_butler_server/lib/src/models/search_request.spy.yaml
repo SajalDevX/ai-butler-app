@@ -1,0 +1,18 @@
+### SearchRequest - DTO for search queries
+class: SearchRequest
+
+fields:
+  ### Natural language search query
+  query: String
+  ### Optional category filter
+  category: String?
+  ### Optional type filter
+  type: String?
+  ### Optional date range start
+  fromDate: DateTime?
+  ### Optional date range end
+  toDate: DateTime?
+  ### Number of results to return
+  limit: int?
+  ### Offset for pagination
+  offset: int?

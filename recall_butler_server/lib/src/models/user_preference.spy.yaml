@@ -1,0 +1,24 @@
+### UserPreference - user settings and preferences
+class: UserPreference
+table: user_preference
+
+fields:
+  ### Foreign key to user
+  userId: int
+  ### User's timezone
+  timezone: String
+  ### Preferred notification time (HH:mm format)
+  notificationTime: String?
+  ### Whether floating overlay is enabled
+  overlayEnabled: bool
+  ### Whether weekly digest is enabled
+  weeklyDigestEnabled: bool
+  ### Whether proactive reminders are enabled
+  proactiveRemindersEnabled: bool
+  ### Theme preference: dark, light, system
+  theme: String
+
+indexes:
+  user_preference_user_idx:
+    fields: userId
+    unique: true

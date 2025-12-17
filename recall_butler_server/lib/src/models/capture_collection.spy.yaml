@@ -1,0 +1,20 @@
+### CaptureCollection - join table for many-to-many relationship
+class: CaptureCollection
+table: capture_collection
+
+fields:
+  ### Foreign key to capture
+  captureId: int
+  ### Foreign key to collection
+  collectionId: int
+  ### When the capture was added to the collection
+  addedAt: DateTime
+
+indexes:
+  capture_collection_capture_idx:
+    fields: captureId
+  capture_collection_collection_idx:
+    fields: collectionId
+  capture_collection_unique:
+    fields: captureId, collectionId
+    unique: true

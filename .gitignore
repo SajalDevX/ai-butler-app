@@ -1,0 +1,31 @@
+# Root gitignore for monorepo
+
+# Environment files
+.env
+.env.*
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (extra protection)
+**/passwords.yaml
+**/secrets.yaml
+**/*secret*
+**/*.keystore
+**/*.jks
+**/key.properties
+**/firebase_service_account_key.json
+
+# Build artifacts
+**/build/
+**/.dart_tool/
+
+# Logs
+*.log

@@ -1,0 +1,12 @@
+### CaptureRequest - DTO for creating a new capture
+class: CaptureRequest
+
+fields:
+  ### Type of capture: screenshot, photo, voice, link
+  type: String
+  ### Base64 encoded file data (for images/voice)
+  fileData: String?
+  ### URL for link captures
+  url: String?
+  ### Source app where capture originated
+  sourceApp: String?

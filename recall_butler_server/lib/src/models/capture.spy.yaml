@@ -1,0 +1,37 @@
+### Capture model - stores all captured content (screenshots, photos, voice, links)
+class: Capture
+table: capture
+
+fields:
+  ### Foreign key to user
+  userId: int
+  ### Type of capture: screenshot, photo, voice, link
+  type: String
+  ### File storage URL for original file
+  originalUrl: String?
+  ### Compressed thumbnail URL
+  thumbnailUrl: String?
+  ### AI-extracted text content from the capture
+  extractedText: String?
+  ### AI-generated description/summary
+  aiSummary: String?
+  ### JSON array of AI-generated tags
+  tags: String?
+  ### Category: Work, Personal, Recipe, Shopping, Travel, Health, Finance, Learning, Other
+  category: String
+  ### Capture timestamp
+  createdAt: DateTime
+  ### Whether this is a reminder-type capture
+  isReminder: bool
+  ### Source app or URL where content was captured from
+  sourceApp: String?
+  ### Processing status: pending, processing, completed, failed
+  processingStatus: String
+
+indexes:
+  capture_user_idx:
+    fields: userId
+  capture_created_idx:
+    fields: createdAt
+  capture_category_idx:
+    fields: category

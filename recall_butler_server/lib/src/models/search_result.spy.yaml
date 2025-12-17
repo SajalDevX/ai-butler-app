@@ -1,0 +1,12 @@
+### SearchResult - DTO for search results
+class: SearchResult
+
+fields:
+  ### List of matching captures
+  captures: List<Capture>
+  ### Total number of matching results
+  totalCount: int
+  ### AI-generated summary of results (if applicable)
+  aiSummary: String?
+  ### Related search suggestions
+  suggestions: List<String>?

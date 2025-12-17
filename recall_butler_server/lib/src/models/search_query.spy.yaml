@@ -1,0 +1,21 @@
+### SearchQuery - analytics tracking for user searches
+class: SearchQuery
+table: search_query
+
+fields:
+  ### Foreign key to user
+  userId: int
+  ### The search query string
+  query: String
+  ### Number of results returned
+  resultsCount: int
+  ### ID of capture that was clicked (if any)
+  clickedCaptureId: int?
+  ### When the search was performed
+  searchedAt: DateTime
+
+indexes:
+  search_query_user_idx:
+    fields: userId
+  search_query_date_idx:
+    fields: searchedAt

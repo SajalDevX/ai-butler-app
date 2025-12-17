@@ -1,0 +1,20 @@
+### WeeklyDigest - AI-generated weekly summary
+class: WeeklyDigest
+
+fields:
+  ### User ID
+  userId: int
+  ### Start of the week
+  weekStart: DateTime
+  ### End of the week
+  weekEnd: DateTime
+  ### Total captures this week
+  totalCaptures: int
+  ### Captures by category
+  capturesByCategory: String
+  ### AI-generated summary of the week
+  summary: String
+  ### Top tags of the week
+  topTags: List<String>
+  ### Generated timestamp
+  generatedAt: DateTime

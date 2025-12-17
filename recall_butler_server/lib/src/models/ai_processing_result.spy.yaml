@@ -1,0 +1,16 @@
+### AIProcessingResult - result from Gemini AI processing
+class: AIProcessingResult
+
+fields:
+  ### Extracted text from the content
+  extractedText: String?
+  ### AI-generated description
+  description: String?
+  ### List of relevant tags
+  tags: List<String>
+  ### Detected category
+  category: String
+  ### Whether this appears to be a reminder
+  isReminder: bool
+  ### Detected action items (for voice notes)
+  actionItems: List<String>?

@@ -1,0 +1,34 @@
+capture:
+  - createCapture:
+  - getCaptures:
+  - getCapture:
+  - deleteCapture:
+  - getCapturesByDateRange:
+  - updateCategory:
+  - getReminders:
+collection:
+  - createCollection:
+  - getCollections:
+  - getCollection:
+  - getCollectionCaptures:
+  - addCaptureToCollection:
+  - removeCaptureFromCollection:
+  - updateCollection:
+  - deleteCollection:
+insight:
+  - getProactiveInsights:
+  - getRelatedCaptures:
+  - getWeeklyDigest:
+  - getStatistics:
+  - dismissInsight:
+search:
+  - search:
+  - quickSearch:
+  - getRecentSearches:
+  - recordSearchClick:
+userPreference:
+  - getPreferences:
+  - updatePreferences:
+  - toggleOverlay:
+greeting:
+  - hello:

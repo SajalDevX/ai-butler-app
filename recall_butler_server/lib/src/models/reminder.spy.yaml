@@ -1,0 +1,27 @@
+### Reminder - proactive reminder notifications for captures
+class: Reminder
+table: reminder
+
+fields:
+  ### Foreign key to user
+  userId: int
+  ### Foreign key to capture
+  captureId: int
+  ### Reminder message
+  message: String?
+  ### When to trigger the reminder
+  triggerAt: DateTime
+  ### Whether the reminder has been sent
+  isSent: bool
+  ### Whether the user has dismissed the reminder
+  isDismissed: bool
+  ### Creation timestamp
+  createdAt: DateTime
+
+indexes:
+  reminder_user_idx:
+    fields: userId
+  reminder_capture_idx:
+    fields: captureId
+  reminder_trigger_idx:
+    fields: triggerAt
