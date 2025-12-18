@@ -1,0 +1,6 @@
+### Result of AI draft generation
+class: EmailDraftResult
+fields:
+  success: bool
+  error: String?
+  draftText: String?

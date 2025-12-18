@@ -1,0 +1,7 @@
+### Result of Google OAuth token exchange
+class: GoogleAuthResult
+fields:
+  success: bool
+  error: String?
+  gmailEnabled: bool?
+  calendarEnabled: bool?

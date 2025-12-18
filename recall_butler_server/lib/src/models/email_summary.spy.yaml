@@ -1,0 +1,57 @@
+### Email Summary - AI-processed email data
+### Stores email metadata and AI analysis results
+class: EmailSummary
+table: email_summaries
+fields:
+  userId: int
+  # Gmail identifiers
+  gmailId: String  # Gmail message ID
+  threadId: String  # Gmail thread ID
+  # Email metadata
+  subject: String
+  fromEmail: String
+  fromName: String?
+  toEmails: String  # JSON array
+  ccEmails: String?  # JSON array
+  receivedAt: DateTime
+  # Content
+  snippet: String?  # Preview text
+  bodyText: String?  # Plain text body (may be truncated)
+  hasAttachments: bool
+  attachmentNames: String?  # JSON array
+  # AI Analysis
+  aiSummary: String?
+  importanceScore: int  # 1-10 scale
+  importanceReason: String?
+  category: String  # primary, social, promotions, updates, forums
+  sentiment: String?  # positive, negative, neutral
+  # Action detection
+  requiresAction: bool
+  suggestedActions: String?  # JSON array of action items
+  deadlineDetected: DateTime?
+  # Draft response
+  draftReply: String?
+  draftTone: String?  # professional, casual, friendly
+  # Processing state
+  isRead: bool
+  isArchived: bool
+  isProcessed: bool
+  processingError: String?
+  # Timestamps
+  createdAt: DateTime
+  updatedAt: DateTime
+
+indexes:
+  email_user_idx:
+    fields: userId
+  email_gmail_id_idx:
+    fields: gmailId
+    unique: true
+  email_thread_idx:
+    fields: threadId
+  email_importance_idx:
+    fields: importanceScore
+  email_received_idx:
+    fields: receivedAt
+  email_requires_action_idx:
+    fields: requiresAction

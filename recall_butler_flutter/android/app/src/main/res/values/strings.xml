@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Recall Butler</string>
+    <!-- Web Client ID for Google Sign-In (server auth code request) -->
+    <string name="default_web_client_id">251862626594-7r0ordn42nd28qd7jpeinqa5igrij8l2.apps.googleusercontent.com</string>
+</resources>

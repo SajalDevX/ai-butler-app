@@ -1,0 +1,29 @@
+### Google OAuth Token Storage
+### Stores encrypted OAuth tokens for Google API access
+class: GoogleToken
+table: google_tokens
+fields:
+  userId: int
+  # Encrypted tokens for security
+  accessToken: String
+  refreshToken: String
+  # Token metadata
+  expiresAt: DateTime
+  scope: String  # Comma-separated scopes
+  # Enabled features
+  gmailEnabled: bool
+  calendarEnabled: bool
+  # Sync state
+  lastGmailSync: DateTime?
+  lastCalendarSync: DateTime?
+  gmailHistoryId: String?  # For incremental sync
+  # Timestamps
+  createdAt: DateTime
+  updatedAt: DateTime
+
+indexes:
+  google_token_user_idx:
+    fields: userId
+    unique: true
+  google_token_expires_idx:
+    fields: expiresAt

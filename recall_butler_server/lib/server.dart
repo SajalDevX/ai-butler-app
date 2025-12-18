@@ -1,4 +1,6 @@
 import 'package:recall_butler_server/src/birthday_reminder.dart';
+import 'package:recall_butler_server/src/future_calls/google_sync_future_call.dart';
+import 'package:recall_butler_server/src/services/encryption_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 import 'package:recall_butler_server/src/web/routes/root.dart';
@@ -33,9 +35,28 @@ void run(List<String> args) async {
   // the background. Their schedule is persisted to the database, so you will
   // not lose them if the server is restarted.
 
+  // Initialize encryption service with key from config
+  final encryptionKey = pod.getPassword('encryptionKey') ?? 'default-dev-key';
+  EncryptionService.initialize(encryptionKey);
+
+  // Register future calls
   pod.registerFutureCall(
     BirthdayReminder(),
     FutureCallNames.birthdayReminder.name,
+  );
+
+  // Google sync future calls
+  pod.registerFutureCall(
+    GoogleSyncFutureCall(),
+    GoogleSyncFutureCall.callName,
+  );
+  pod.registerFutureCall(
+    EmailAIProcessFutureCall(),
+    EmailAIProcessFutureCall.callName,
+  );
+  pod.registerFutureCall(
+    MeetingPrepFutureCall(),
+    MeetingPrepFutureCall.callName,
   );
 
   // You can schedule future calls for a later time during startup. But you can
@@ -51,10 +72,32 @@ void run(List<String> args) async {
     ),
     Duration(seconds: 5),
   );
+
+  // Start Google sync workers (delayed start to allow server warmup)
+  await pod.futureCallWithDelay(
+    GoogleSyncFutureCall.callName,
+    SyncTask(taskType: 'googleSync'),
+    const Duration(minutes: 1),
+  );
+  await pod.futureCallWithDelay(
+    EmailAIProcessFutureCall.callName,
+    SyncTask(taskType: 'emailAIProcess'),
+    const Duration(minutes: 2),
+  );
+  await pod.futureCallWithDelay(
+    MeetingPrepFutureCall.callName,
+    SyncTask(taskType: 'meetingPrep'),
+    const Duration(minutes: 3),
+  );
 }
 
 /// Names of all future calls in the server.
 ///
 /// This is better than using a string literal, as it will reduce the risk of
 /// typos and make it easier to refactor the code.
-enum FutureCallNames { birthdayReminder }
+enum FutureCallNames {
+  birthdayReminder,
+  googleSync,
+  emailAIProcess,
+  meetingPrep,
+}

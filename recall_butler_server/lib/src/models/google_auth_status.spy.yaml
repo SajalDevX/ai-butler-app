@@ -1,0 +1,9 @@
+### Current Google authentication status
+class: GoogleAuthStatus
+fields:
+  isAuthenticated: bool
+  gmailEnabled: bool
+  calendarEnabled: bool
+  lastGmailSync: DateTime?
+  lastCalendarSync: DateTime?
+  tokenExpiresAt: DateTime?

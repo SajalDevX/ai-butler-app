@@ -1,0 +1,7 @@
+### Result of meeting preparation generation
+class: MeetingPrepResult
+fields:
+  success: bool
+  error: String?
+  contextBrief: String?
+  relatedEmailCount: int?

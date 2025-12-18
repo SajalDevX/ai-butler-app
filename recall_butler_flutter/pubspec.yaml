@@ -52,6 +52,9 @@ dependencies:
   url_launcher: ^6.3.0
   path_provider: ^2.1.4
 
+  # Google Sign-In for Gmail/Calendar integration
+  google_sign_in: ^6.2.1
+
   # Notifications
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4

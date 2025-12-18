@@ -32,12 +32,33 @@ collection:
 dashboard:
   - getDashboardStats:
   - getMorningBriefing:
+googleAuth:
+  - exchangeCode:
+  - getAuthStatus:
+  - updateFeatures:
+  - revokeAccess:
 insight:
   - getProactiveInsights:
   - getRelatedCaptures:
   - getWeeklyDigest:
   - getStatistics:
   - dismissInsight:
+integration:
+  - getEmails:
+  - getEmail:
+  - getImportantEmails:
+  - getActionableEmails:
+  - generateDraft:
+  - createGmailDraft:
+  - syncEmails:
+  - getDailyDigest:
+  - getUpcomingEvents:
+  - getTodayEvents:
+  - getEventsByRange:
+  - getEvent:
+  - generateMeetingPrep:
+  - syncCalendar:
+  - getDashboard:
 search:
   - search:
   - quickSearch:

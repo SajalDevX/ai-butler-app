@@ -17,12 +17,26 @@ import 'package:recall_butler_client/src/protocol/capture_request.dart' as _i5;
 import 'package:recall_butler_client/src/protocol/collection.dart' as _i6;
 import 'package:recall_butler_client/src/protocol/dashboard_stats.dart' as _i7;
 import 'package:recall_butler_client/src/protocol/morning_briefing.dart' as _i8;
-import 'package:recall_butler_client/src/protocol/weekly_digest.dart' as _i9;
-import 'package:recall_butler_client/src/protocol/search_result.dart' as _i10;
-import 'package:recall_butler_client/src/protocol/search_request.dart' as _i11;
-import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i12;
-import 'package:recall_butler_client/src/protocol/greeting.dart' as _i13;
-import 'protocol.dart' as _i14;
+import 'package:recall_butler_client/src/protocol/google_auth_result.dart'
+    as _i9;
+import 'package:recall_butler_client/src/protocol/google_auth_status.dart'
+    as _i10;
+import 'package:recall_butler_client/src/protocol/weekly_digest.dart' as _i11;
+import 'package:recall_butler_client/src/protocol/email_summary.dart' as _i12;
+import 'package:recall_butler_client/src/protocol/email_draft_result.dart'
+    as _i13;
+import 'package:recall_butler_client/src/protocol/sync_result.dart' as _i14;
+import 'package:recall_butler_client/src/protocol/calendar_event_cache.dart'
+    as _i15;
+import 'package:recall_butler_client/src/protocol/meeting_prep_result.dart'
+    as _i16;
+import 'package:recall_butler_client/src/protocol/integration_dashboard.dart'
+    as _i17;
+import 'package:recall_butler_client/src/protocol/search_result.dart' as _i18;
+import 'package:recall_butler_client/src/protocol/search_request.dart' as _i19;
+import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i20;
+import 'package:recall_butler_client/src/protocol/greeting.dart' as _i21;
+import 'protocol.dart' as _i22;
 
 /// {@category Endpoint}
 class EndpointAction extends _i1.EndpointRef {
@@ -393,6 +407,64 @@ class EndpointDashboard extends _i1.EndpointRef {
       );
 }
 
+/// Endpoint for Google OAuth authentication
+/// Handles token exchange, refresh, and revocation
+/// {@category Endpoint}
+class EndpointGoogleAuth extends _i1.EndpointRef {
+  EndpointGoogleAuth(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'googleAuth';
+
+  /// Exchange authorization code for tokens
+  /// Called after user completes Google OAuth consent screen
+  _i2.Future<_i9.GoogleAuthResult> exchangeCode(
+    String authCode,
+    String redirectUri,
+    bool enableGmail,
+    bool enableCalendar,
+  ) =>
+      caller.callServerEndpoint<_i9.GoogleAuthResult>(
+        'googleAuth',
+        'exchangeCode',
+        {
+          'authCode': authCode,
+          'redirectUri': redirectUri,
+          'enableGmail': enableGmail,
+          'enableCalendar': enableCalendar,
+        },
+      );
+
+  /// Get current authentication status
+  _i2.Future<_i10.GoogleAuthStatus> getAuthStatus() =>
+      caller.callServerEndpoint<_i10.GoogleAuthStatus>(
+        'googleAuth',
+        'getAuthStatus',
+        {},
+      );
+
+  /// Update feature toggles (enable/disable Gmail or Calendar)
+  _i2.Future<bool> updateFeatures(
+    bool enableGmail,
+    bool enableCalendar,
+  ) =>
+      caller.callServerEndpoint<bool>(
+        'googleAuth',
+        'updateFeatures',
+        {
+          'enableGmail': enableGmail,
+          'enableCalendar': enableCalendar,
+        },
+      );
+
+  /// Revoke Google access and delete stored tokens
+  _i2.Future<bool> revokeAccess() => caller.callServerEndpoint<bool>(
+        'googleAuth',
+        'revokeAccess',
+        {},
+      );
+}
+
 /// {@category Endpoint}
 class EndpointInsight extends _i1.EndpointRef {
   EndpointInsight(_i1.EndpointCaller caller) : super(caller);
@@ -417,8 +489,8 @@ class EndpointInsight extends _i1.EndpointRef {
       );
 
   /// Generate weekly digest
-  _i2.Future<_i9.WeeklyDigest> getWeeklyDigest() =>
-      caller.callServerEndpoint<_i9.WeeklyDigest>(
+  _i2.Future<_i11.WeeklyDigest> getWeeklyDigest() =>
+      caller.callServerEndpoint<_i11.WeeklyDigest>(
         'insight',
         'getWeeklyDigest',
         {},
@@ -441,6 +513,174 @@ class EndpointInsight extends _i1.EndpointRef {
       );
 }
 
+/// Endpoint for Google integration features (Gmail, Calendar)
+/// {@category Endpoint}
+class EndpointIntegration extends _i1.EndpointRef {
+  EndpointIntegration(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'integration';
+
+  /// Get emails with optional filters
+  _i2.Future<List<_i12.EmailSummary>> getEmails({
+    int? limit,
+    int? offset,
+    String? category,
+    int? minImportance,
+    bool? requiresAction,
+    bool? unreadOnly,
+  }) =>
+      caller.callServerEndpoint<List<_i12.EmailSummary>>(
+        'integration',
+        'getEmails',
+        {
+          'limit': limit,
+          'offset': offset,
+          'category': category,
+          'minImportance': minImportance,
+          'requiresAction': requiresAction,
+          'unreadOnly': unreadOnly,
+        },
+      );
+
+  /// Get a single email by ID
+  _i2.Future<_i12.EmailSummary?> getEmail(int emailId) =>
+      caller.callServerEndpoint<_i12.EmailSummary?>(
+        'integration',
+        'getEmail',
+        {'emailId': emailId},
+      );
+
+  /// Get important emails (importance >= 7)
+  _i2.Future<List<_i12.EmailSummary>> getImportantEmails({int? limit}) =>
+      caller.callServerEndpoint<List<_i12.EmailSummary>>(
+        'integration',
+        'getImportantEmails',
+        {'limit': limit},
+      );
+
+  /// Get emails requiring action
+  _i2.Future<List<_i12.EmailSummary>> getActionableEmails({int? limit}) =>
+      caller.callServerEndpoint<List<_i12.EmailSummary>>(
+        'integration',
+        'getActionableEmails',
+        {'limit': limit},
+      );
+
+  /// Generate AI draft reply for an email
+  _i2.Future<_i13.EmailDraftResult> generateDraft(
+    int emailId, {
+    required String tone,
+    String? additionalContext,
+  }) =>
+      caller.callServerEndpoint<_i13.EmailDraftResult>(
+        'integration',
+        'generateDraft',
+        {
+          'emailId': emailId,
+          'tone': tone,
+          'additionalContext': additionalContext,
+        },
+      );
+
+  /// Create a Gmail draft from generated text
+  _i2.Future<bool> createGmailDraft(
+    int emailId,
+    String replyText,
+  ) =>
+      caller.callServerEndpoint<bool>(
+        'integration',
+        'createGmailDraft',
+        {
+          'emailId': emailId,
+          'replyText': replyText,
+        },
+      );
+
+  /// Trigger manual email sync
+  _i2.Future<_i14.SyncResult> syncEmails({required bool fullSync}) =>
+      caller.callServerEndpoint<_i14.SyncResult>(
+        'integration',
+        'syncEmails',
+        {'fullSync': fullSync},
+      );
+
+  /// Get daily email digest
+  _i2.Future<String?> getDailyDigest() => caller.callServerEndpoint<String?>(
+        'integration',
+        'getDailyDigest',
+        {},
+      );
+
+  /// Get upcoming calendar events
+  _i2.Future<List<_i15.CalendarEventCache>> getUpcomingEvents({
+    required int hoursAhead,
+    int? limit,
+  }) =>
+      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+        'integration',
+        'getUpcomingEvents',
+        {
+          'hoursAhead': hoursAhead,
+          'limit': limit,
+        },
+      );
+
+  /// Get today's calendar events
+  _i2.Future<List<_i15.CalendarEventCache>> getTodayEvents() =>
+      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+        'integration',
+        'getTodayEvents',
+        {},
+      );
+
+  /// Get events for a date range
+  _i2.Future<List<_i15.CalendarEventCache>> getEventsByRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) =>
+      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+        'integration',
+        'getEventsByRange',
+        {
+          'startDate': startDate,
+          'endDate': endDate,
+        },
+      );
+
+  /// Get a single event by ID
+  _i2.Future<_i15.CalendarEventCache?> getEvent(int eventId) =>
+      caller.callServerEndpoint<_i15.CalendarEventCache?>(
+        'integration',
+        'getEvent',
+        {'eventId': eventId},
+      );
+
+  /// Generate meeting preparation brief
+  _i2.Future<_i16.MeetingPrepResult> generateMeetingPrep(int eventId) =>
+      caller.callServerEndpoint<_i16.MeetingPrepResult>(
+        'integration',
+        'generateMeetingPrep',
+        {'eventId': eventId},
+      );
+
+  /// Trigger manual calendar sync
+  _i2.Future<_i14.SyncResult> syncCalendar({required int daysAhead}) =>
+      caller.callServerEndpoint<_i14.SyncResult>(
+        'integration',
+        'syncCalendar',
+        {'daysAhead': daysAhead},
+      );
+
+  /// Get integrated dashboard data
+  _i2.Future<_i17.IntegrationDashboard> getDashboard() =>
+      caller.callServerEndpoint<_i17.IntegrationDashboard>(
+        'integration',
+        'getDashboard',
+        {},
+      );
+}
+
 /// {@category Endpoint}
 class EndpointSearch extends _i1.EndpointRef {
   EndpointSearch(_i1.EndpointCaller caller) : super(caller);
@@ -449,8 +689,8 @@ class EndpointSearch extends _i1.EndpointRef {
   String get name => 'search';
 
   /// Perform semantic search across captures
-  _i2.Future<_i10.SearchResult> search(_i11.SearchRequest request) =>
-      caller.callServerEndpoint<_i10.SearchResult>(
+  _i2.Future<_i18.SearchResult> search(_i19.SearchRequest request) =>
+      caller.callServerEndpoint<_i18.SearchResult>(
         'search',
         'search',
         {'request': request},
@@ -495,15 +735,15 @@ class EndpointUserPreference extends _i1.EndpointRef {
   String get name => 'userPreference';
 
   /// Get user preferences, creating default if not exists
-  _i2.Future<_i12.UserPreference> getPreferences() =>
-      caller.callServerEndpoint<_i12.UserPreference>(
+  _i2.Future<_i20.UserPreference> getPreferences() =>
+      caller.callServerEndpoint<_i20.UserPreference>(
         'userPreference',
         'getPreferences',
         {},
       );
 
   /// Update user preferences
-  _i2.Future<_i12.UserPreference> updatePreferences({
+  _i2.Future<_i20.UserPreference> updatePreferences({
     String? timezone,
     String? notificationTime,
     bool? overlayEnabled,
@@ -511,7 +751,7 @@ class EndpointUserPreference extends _i1.EndpointRef {
     bool? proactiveRemindersEnabled,
     String? theme,
   }) =>
-      caller.callServerEndpoint<_i12.UserPreference>(
+      caller.callServerEndpoint<_i20.UserPreference>(
         'userPreference',
         'updatePreferences',
         {
@@ -542,8 +782,8 @@ class EndpointGreeting extends _i1.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i2.Future<_i13.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i13.Greeting>(
+  _i2.Future<_i21.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i21.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -566,7 +806,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
           host,
-          _i14.Protocol(),
+          _i22.Protocol(),
           securityContext: securityContext,
           authenticationKeyManager: authenticationKeyManager,
           streamingConnectionTimeout: streamingConnectionTimeout,
@@ -580,7 +820,9 @@ class Client extends _i1.ServerpodClientShared {
     capture = EndpointCapture(this);
     collection = EndpointCollection(this);
     dashboard = EndpointDashboard(this);
+    googleAuth = EndpointGoogleAuth(this);
     insight = EndpointInsight(this);
+    integration = EndpointIntegration(this);
     search = EndpointSearch(this);
     userPreference = EndpointUserPreference(this);
     greeting = EndpointGreeting(this);
@@ -594,7 +836,11 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointDashboard dashboard;
 
+  late final EndpointGoogleAuth googleAuth;
+
   late final EndpointInsight insight;
+
+  late final EndpointIntegration integration;
 
   late final EndpointSearch search;
 
@@ -608,7 +854,9 @@ class Client extends _i1.ServerpodClientShared {
         'capture': capture,
         'collection': collection,
         'dashboard': dashboard,
+        'googleAuth': googleAuth,
         'insight': insight,
+        'integration': integration,
         'search': search,
         'userPreference': userPreference,
         'greeting': greeting,
