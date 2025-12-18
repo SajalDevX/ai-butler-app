@@ -114,6 +114,9 @@ class CaptureEndpoint extends Endpoint {
     int captureId,
     Uint8List? imageBytes,
   ) async {
+    // Small delay to avoid rate limiting after quick analysis
+    await Future.delayed(const Duration(seconds: 2));
+
     // Run deep processing in a separate session (fire and forget)
     final bgSession = await session.serverpod.createSession(enableLogging: true);
 

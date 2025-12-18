@@ -10,8 +10,8 @@ import 'token_optimizer_service.dart';
 class GeminiService {
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
-  static const String _modelFast = 'gemini-2.0-flash-lite'; // Fast model for quick analysis
-  static const String _modelDeep = 'gemini-2.5-flash-lite'; // Better model for deep analysis
+  static const String _modelFast = 'gemini-2.5-flash'; // Fast model for quick analysis
+  static const String _modelDeep = 'gemini-2.5-flash'; // Better model for deep analysis
   static const int _maxRetries = 3;
   static const int _maxTokensAbsolute = 4096; // Absolute max for safety
 
@@ -736,7 +736,7 @@ Be conversational and helpful, like a butler summarizing the week.
 
       http.Response? response;
 
-      // Retry logic with exponential backoff for 503 errors
+      // Retry logic with exponential backoff for rate limit (429) and server errors (503)
       for (int attempt = 0; attempt < _maxRetries; attempt++) {
         response = await http.post(
           Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
@@ -748,18 +748,25 @@ Be conversational and helpful, like a butler summarizing the week.
           break;
         }
 
+        // Handle rate limit (429) and server unavailable (503) with exponential backoff
         if (response.statusCode == 503 || response.statusCode == 429) {
           if (attempt < _maxRetries - 1) {
-            await Future.delayed(Duration(seconds: 1 << attempt));
+            // Longer backoff for rate limits: 2s, 4s, 8s
+            final delaySeconds = 2 << attempt;
+            session.log('Rate limited (${response.statusCode}), retrying in ${delaySeconds}s (attempt ${attempt + 1}/$_maxRetries)');
+            await Future.delayed(Duration(seconds: delaySeconds));
             continue;
           }
+          // Last attempt failed with rate limit
+          throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
         }
 
+        // For other errors, throw immediately
         throw Exception('Gemini API error: ${response.statusCode}');
       }
 
       if (response == null || response.statusCode != 200) {
-        throw Exception('Gemini API error after $_maxRetries retries');
+        throw Exception('Gemini API error: unexpected state');
       }
 
       final data = jsonDecode(response.body);
