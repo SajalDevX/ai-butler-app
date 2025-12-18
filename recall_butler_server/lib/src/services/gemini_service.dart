@@ -3,19 +3,134 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
+import 'token_optimizer_service.dart';
 
 /// Service for interacting with Google Gemini AI
+/// Uses Intelligent Adaptive Token Management for optimal API usage
 class GeminiService {
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
-  static const String _model = 'gemini-2.5-flash';
+  static const String _modelFast = 'gemini-2.0-flash-lite'; // Fast model for quick analysis
+  static const String _modelDeep = 'gemini-2.5-flash-lite'; // Better model for deep analysis
   static const int _maxRetries = 3;
+  static const int _maxTokensAbsolute = 4096; // Absolute max for safety
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // QUICK ANALYSIS - Used in sync path (must be fast, <500ms target)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Quick analysis for immediate response - simple description and type detection
+  /// Uses adaptive token allocation based on image complexity
+  static Future<QuickAnalysisResult> quickAnalysis(
+    Session session,
+    String type,
+    Uint8List imageBytes,
+  ) async {
+    final apiKey = session.passwords['geminiApiKey'];
+    if (apiKey == null) {
+      return QuickAnalysisResult(
+        description: 'Processing...',
+        detectedType: 'other',
+        confidence: 0.0,
+      );
+    }
+
+    // Calculate optimal tokens based on image complexity
+    final tokenAllocation = await TokenOptimizerService.calculateQuickTokens(
+      session,
+      imageBytes,
+    );
+    session.log(
+      'Quick analysis token allocation: ${tokenAllocation.tokens} '
+      '(type: ${tokenAllocation.contentType}, complexity: ${tokenAllocation.complexityScore.toStringAsFixed(2)})',
+    );
+
+    final base64Image = base64Encode(imageBytes);
+
+    final prompt = '''
+Analyze this image quickly. Return ONLY valid JSON (no markdown):
+{"description":"One sentence description max 15 words","detectedType":"recipe|task|reminder|event|note|shopping|calendar|other","confidence":0.8}
+''';
+
+    int tokensUsed = 0;
+    bool wasComplete = false;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/$_modelFast:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt},
+                {
+                  'inline_data': {
+                    'mime_type': 'image/jpeg',
+                    'data': base64Image,
+                  }
+                }
+              ]
+            }
+          ],
+          'generationConfig': {
+            'maxOutputTokens': tokenAllocation.tokens,
+            'temperature': 0.1,
+          }
+        }),
+      ).timeout(const Duration(seconds: 5)); // Strict timeout
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final text = data['candidates'][0]['content']['parts'][0]['text'];
+
+        // Check if response was complete
+        final finishReason = data['candidates'][0]['finishReason'] ?? 'STOP';
+        wasComplete = finishReason == 'STOP';
+
+        // Estimate tokens used (rough: ~4 chars per token)
+        tokensUsed = (text.length / 4).round();
+
+        final cleanedText = _extractJson(text);
+        final parsed = jsonDecode(cleanedText);
+
+        // Record usage for learning
+        await TokenOptimizerService.recordUsage(
+          session,
+          contentType: tokenAllocation.contentType,
+          complexityBucket: tokenAllocation.complexityBucket,
+          tokensAllocated: tokenAllocation.tokens,
+          tokensUsed: tokensUsed,
+          wasComplete: wasComplete,
+          isQuickAnalysis: true,
+          complexityScore: tokenAllocation.complexityScore,
+        );
+
+        return QuickAnalysisResult(
+          description: parsed['description'] ?? 'Image captured',
+          detectedType: parsed['detectedType'] ?? 'other',
+          confidence: (parsed['confidence'] ?? 0.5).toDouble(),
+        );
+      }
+    } catch (e) {
+      session.log('Quick analysis failed: $e', level: LogLevel.warning);
+    }
+
+    // Safe fallback on any error
+    return QuickAnalysisResult(
+      description: 'Image captured - analyzing...',
+      detectedType: 'other',
+      confidence: 0.0,
+    );
+  }
 
   /// Process a capture with Gemini AI
+  /// Optionally accepts imageBytes to avoid re-fetching from storage
   static Future<AIProcessingResult> processCapture(
     Session session,
-    Capture capture,
-  ) async {
+    Capture capture, {
+    Uint8List? imageBytes,
+  }) async {
     final apiKey = session.passwords['geminiApiKey'];
     if (apiKey == null) {
       throw Exception('Gemini API key not configured');
@@ -24,7 +139,7 @@ class GeminiService {
     switch (capture.type) {
       case 'screenshot':
       case 'photo':
-        return await _processImage(session, capture, apiKey);
+        return await _processImage(session, capture, apiKey, imageBytes: imageBytes);
       case 'voice':
         return await _processVoice(session, capture, apiKey);
       case 'link':
@@ -39,12 +154,30 @@ class GeminiService {
   }
 
   /// Process image capture with Gemini Vision
+  /// Accepts optional imageBytes to skip fetching from URL (faster)
   static Future<AIProcessingResult> _processImage(
     Session session,
     Capture capture,
-    String apiKey,
-  ) async {
-    if (capture.originalUrl == null) {
+    String apiKey, {
+    Uint8List? imageBytes,
+  }) async {
+    Uint8List bytes;
+    String mimeType;
+
+    // Use provided bytes if available (faster), otherwise fetch from URL
+    if (imageBytes != null) {
+      bytes = imageBytes;
+      mimeType = 'image/jpeg'; // Thumbnail is always JPEG
+    } else if (capture.thumbnailUrl != null || capture.originalUrl != null) {
+      // Prefer thumbnail (smaller = faster processing)
+      final url = capture.thumbnailUrl ?? capture.originalUrl!;
+      final imageResponse = await http.get(Uri.parse(url));
+      if (imageResponse.statusCode != 200) {
+        throw Exception('Failed to fetch image');
+      }
+      bytes = imageResponse.bodyBytes;
+      mimeType = _getMimeType(url);
+    } else {
       return AIProcessingResult(
         tags: [],
         category: 'Other',
@@ -52,29 +185,96 @@ class GeminiService {
       );
     }
 
-    // Fetch the image data
-    final imageResponse = await http.get(Uri.parse(capture.originalUrl!));
-    if (imageResponse.statusCode != 200) {
-      throw Exception('Failed to fetch image');
-    }
-
-    final base64Image = base64Encode(imageResponse.bodyBytes);
-    final mimeType = _getMimeType(capture.originalUrl!);
+    final base64Image = base64Encode(bytes);
 
     final prompt = '''
-Analyze this image and return a JSON response with the following structure:
+You are a smart personal assistant analyzing an image to extract important information and set intelligent reminders.
+
+CRITICAL: If this is a CALENDAR image:
+1. Identify the month and year shown (e.g., "January 2026")
+2. Go through EACH DAY that has any text/event marked
+3. Create a SEPARATE actionItem for EACH event found
+4. Use EXACT date format YYYY-MM-DD
+
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "extractedText": "Any readable text in the image",
-  "description": "1-2 sentence description of the image content",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "category": "One of: Work, Personal, Recipe, Shopping, Travel, Health, Finance, Learning, Other",
-  "isReminder": true or false (true if this appears to be a reminder, todo, or task),
-  "actionItems": ["action1", "action2"] (optional, only if there are clear action items)
+  "extractedText": "All visible text with dates",
+  "description": "Brief description of image content",
+  "tags": ["calendar", "birthday", "festival"],
+  "category": "Personal",
+  "isReminder": true,
+  "actionItems": [
+    {
+      "type": "birthday",
+      "title": "Billy's Birthday",
+      "dueAt": "2026-01-19",
+      "priority": "high",
+      "reminderDaysBefore": 1,
+      "notes": "Remember to wish Billy and arrange gift"
+    },
+    {
+      "type": "event",
+      "title": "Republic Day",
+      "dueAt": "2026-01-26",
+      "priority": "low",
+      "reminderDaysBefore": 0,
+      "notes": "National holiday"
+    }
+  ]
 }
 
-Be thorough in extracting all text. Generate relevant, specific tags.
-Choose the most appropriate category based on content.
+═══ INTELLIGENT PRIORITY RULES ═══
+
+HIGH PRIORITY (personal/actionable - user needs to DO something):
+- Birthdays of people (need to wish, buy gift)
+- Anniversaries (personal dates)
+- Personal appointments (doctor, meetings)
+- Deadlines (bills, submissions, exams)
+- Work tasks with dates
+
+MEDIUM PRIORITY (important awareness):
+- Religious festivals user might celebrate (based on context)
+- Family events
+- Travel dates
+- Scheduled activities
+
+LOW PRIORITY (general awareness - no action needed):
+- Public holidays (Independence Day, Republic Day)
+- General festivals (unless clearly personal)
+- Bank holidays
+- Events that don't require user action
+
+═══ SMART REMINDER TIMING ═══
+
+Set "reminderDaysBefore" based on event type:
+- Birthday: 1-2 days before (time to arrange gift/wish)
+- Deadline: 2-3 days before (time to prepare)
+- Appointment: 1 day before
+- Festival/Holiday: 0 (remind on the day)
+- Anniversary: 3-7 days before (time to plan)
+
+═══ TYPE CLASSIFICATION ═══
+
+- "birthday" - Someone's birthday
+- "anniversary" - Wedding/relationship anniversaries
+- "deadline" - Due dates, submissions, payments
+- "appointment" - Doctor, meetings, calls
+- "event" - Festivals, holidays, celebrations
+- "task" - Things to do
+- "reminder" - General reminders
+
+Extract EVERY date visible. Prioritize personal events over generic ones.
 ''';
+
+    // Calculate optimal tokens based on image complexity
+    final tokenAllocation = await TokenOptimizerService.calculateDeepTokens(
+      session,
+      bytes,
+    );
+    session.log(
+      'Deep analysis token allocation: ${tokenAllocation.tokens} '
+      '(type: ${tokenAllocation.contentType}, complexity: ${tokenAllocation.complexityScore.toStringAsFixed(2)})',
+    );
 
     final requestBody = {
       'contents': [
@@ -92,11 +292,16 @@ Choose the most appropriate category based on content.
       ],
       'generationConfig': {
         'temperature': 0.1,
-        'maxOutputTokens': 1024,
+        'maxOutputTokens': tokenAllocation.tokens,
       }
     };
 
-    return await _callGemini(apiKey, requestBody);
+    return await _callGeminiWithRetry(
+      session,
+      apiKey,
+      requestBody,
+      tokenAllocation,
+    );
   }
 
   /// Process voice capture
@@ -238,7 +443,7 @@ Keep the list to 5-10 highly relevant terms.
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
@@ -297,7 +502,7 @@ Return only a JSON array of the indices in order of relevance, e.g.: [2, 0, 1, 3
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
@@ -363,7 +568,7 @@ Keep it to 2-3 sentences, warm and helpful. Don't use bullet points.
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
@@ -427,7 +632,7 @@ Be conservative - only extract items that are clearly actionable.
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
@@ -485,7 +690,7 @@ Be conversational and helpful, like a butler summarizing the week.
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
@@ -513,7 +718,187 @@ Be conversational and helpful, like a butler summarizing the week.
     return 'You captured ${captures.length} items this week.';
   }
 
-  /// Call Gemini API and parse response
+  /// Call Gemini API with retry logic for truncated responses
+  /// Uses adaptive token management and records usage for learning
+  static Future<AIProcessingResult> _callGeminiWithRetry(
+    Session session,
+    String apiKey,
+    Map<String, dynamic> requestBody,
+    TokenAllocation tokenAllocation,
+  ) async {
+    int currentTokens = tokenAllocation.tokens;
+    int retryCount = 0;
+    const maxTruncationRetries = 2;
+
+    while (retryCount <= maxTruncationRetries) {
+      // Update token count in request body
+      requestBody['generationConfig']['maxOutputTokens'] = currentTokens;
+
+      http.Response? response;
+
+      // Retry logic with exponential backoff for 503 errors
+      for (int attempt = 0; attempt < _maxRetries; attempt++) {
+        response = await http.post(
+          Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        );
+
+        if (response.statusCode == 200) {
+          break;
+        }
+
+        if (response.statusCode == 503 || response.statusCode == 429) {
+          if (attempt < _maxRetries - 1) {
+            await Future.delayed(Duration(seconds: 1 << attempt));
+            continue;
+          }
+        }
+
+        throw Exception('Gemini API error: ${response.statusCode}');
+      }
+
+      if (response == null || response.statusCode != 200) {
+        throw Exception('Gemini API error after $_maxRetries retries');
+      }
+
+      final data = jsonDecode(response.body);
+      final text = data['candidates'][0]['content']['parts'][0]['text'];
+
+      // Check if response was truncated
+      final finishReason = data['candidates'][0]['finishReason'] ?? 'STOP';
+      final wasComplete = finishReason == 'STOP';
+
+      // Estimate tokens used
+      final tokensUsed = (text.length / 4).round();
+
+      if (!wasComplete && retryCount < maxTruncationRetries) {
+        // Response was truncated - retry with more tokens
+        session.log(
+          'Response truncated (finishReason: $finishReason). '
+          'Retrying with more tokens: $currentTokens -> ${TokenOptimizerService.calculateRetryTokens(currentTokens)}',
+        );
+
+        // Record the truncation for learning
+        await TokenOptimizerService.recordUsage(
+          session,
+          contentType: tokenAllocation.contentType,
+          complexityBucket: tokenAllocation.complexityBucket,
+          tokensAllocated: currentTokens,
+          tokensUsed: tokensUsed,
+          wasComplete: false,
+          isQuickAnalysis: false,
+          complexityScore: tokenAllocation.complexityScore,
+        );
+
+        currentTokens = TokenOptimizerService.calculateRetryTokens(
+          currentTokens,
+          maxTokens: _maxTokensAbsolute,
+        );
+        retryCount++;
+        continue;
+      }
+
+      // Record successful usage for learning
+      await TokenOptimizerService.recordUsage(
+        session,
+        contentType: tokenAllocation.contentType,
+        complexityBucket: tokenAllocation.complexityBucket,
+        tokensAllocated: currentTokens,
+        tokensUsed: tokensUsed,
+        wasComplete: wasComplete,
+        isQuickAnalysis: false,
+        complexityScore: tokenAllocation.complexityScore,
+      );
+
+      session.log(
+        'API call complete: allocated=$currentTokens used=$tokensUsed '
+        'efficiency=${(tokensUsed / currentTokens * 100).toStringAsFixed(1)}% '
+        'complete=$wasComplete',
+      );
+
+      // Parse and return result
+      return _parseGeminiResponse(text);
+    }
+
+    throw Exception('Failed to get complete response after $maxTruncationRetries truncation retries');
+  }
+
+  /// Parse Gemini response text into AIProcessingResult
+  static AIProcessingResult _parseGeminiResponse(String text) {
+    final jsonText = _extractJson(text);
+
+    try {
+      final parsed = jsonDecode(jsonText);
+
+      List<Map<String, dynamic>>? structuredActions;
+      if (parsed['actionItems'] != null && parsed['actionItems'] is List) {
+        structuredActions = [];
+        for (final item in parsed['actionItems']) {
+          if (item is String) {
+            structuredActions.add({
+              'type': 'task',
+              'title': item,
+              'priority': 'medium',
+            });
+          } else if (item is Map) {
+            structuredActions.add(Map<String, dynamic>.from(item));
+          }
+        }
+      }
+
+      final result = AIProcessingResult(
+        extractedText: parsed['extractedText'] ?? '',
+        description: parsed['description'] ?? 'AI processing completed',
+        tags: List<String>.from(parsed['tags'] ?? []),
+        category: parsed['category'] ?? 'Other',
+        isReminder: parsed['isReminder'] ?? false,
+        structuredActionsJson: structuredActions != null && structuredActions.isNotEmpty
+            ? jsonEncode(structuredActions)
+            : null,
+      );
+
+      if (structuredActions != null && structuredActions.isNotEmpty) {
+        print('AI extracted ${structuredActions.length} action items');
+      }
+
+      return result;
+    } catch (e, stackTrace) {
+      print('JSON parsing failed: $e');
+      print('Stack: $stackTrace');
+
+      // Try fallback extraction
+      List<Map<String, dynamic>>? fallbackActions;
+      try {
+        final actionItemsMatch = RegExp(r'"actionItems"\s*:\s*\[([\s\S]*?)\]').firstMatch(jsonText);
+        if (actionItemsMatch != null) {
+          final actionItemsJson = '[${actionItemsMatch.group(1)}]';
+          final items = jsonDecode(actionItemsJson);
+          if (items is List && items.isNotEmpty) {
+            fallbackActions = [];
+            for (final item in items) {
+              if (item is Map) {
+                fallbackActions.add(Map<String, dynamic>.from(item));
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      return AIProcessingResult(
+        extractedText: text.length > 500 ? text.substring(0, 500) : text,
+        description: 'Content captured',
+        tags: ['captured'],
+        category: 'Other',
+        isReminder: false,
+        structuredActionsJson: fallbackActions != null && fallbackActions.isNotEmpty
+            ? jsonEncode(fallbackActions)
+            : null,
+      );
+    }
+  }
+
+  /// Call Gemini API and parse response (legacy - used by other methods)
   static Future<AIProcessingResult> _callGemini(
     String apiKey,
     Map<String, dynamic> requestBody,
@@ -523,7 +908,7 @@ Be conversational and helpful, like a butler summarizing the week.
     // Retry logic with exponential backoff for 503 errors
     for (int attempt = 0; attempt < _maxRetries; attempt++) {
       response = await http.post(
-        Uri.parse('$_baseUrl/$_model:generateContent?key=$apiKey'),
+        Uri.parse('$_baseUrl/$_modelDeep:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
@@ -535,8 +920,8 @@ Be conversational and helpful, like a butler summarizing the week.
       // If 503 or 429 (rate limit), wait and retry
       if (response.statusCode == 503 || response.statusCode == 429) {
         if (attempt < _maxRetries - 1) {
-          // Exponential backoff: 2s, 4s, 8s
-          await Future.delayed(Duration(seconds: 2 << attempt));
+          // Exponential backoff: 1s, 2s, 4s (faster retries)
+          await Future.delayed(Duration(seconds: 1 << attempt));
           continue;
         }
       }
@@ -558,28 +943,79 @@ Be conversational and helpful, like a butler summarizing the week.
     try {
       final parsed = jsonDecode(jsonText);
 
-      return AIProcessingResult(
+      // Handle actionItems - can be list of strings or list of objects
+      List<Map<String, dynamic>>? structuredActions;
+      if (parsed['actionItems'] != null && parsed['actionItems'] is List) {
+        structuredActions = [];
+        for (final item in parsed['actionItems']) {
+          if (item is String) {
+            // Legacy format: simple string
+            structuredActions.add({
+              'type': 'task',
+              'title': item,
+              'priority': 'medium',
+            });
+          } else if (item is Map) {
+            // New format: structured object
+            structuredActions.add(Map<String, dynamic>.from(item));
+          }
+        }
+      }
+
+      final result = AIProcessingResult(
         extractedText: parsed['extractedText'] ?? '',
         description: parsed['description'] ?? 'AI processing completed',
         tags: List<String>.from(parsed['tags'] ?? []),
         category: parsed['category'] ?? 'Other',
         isReminder: parsed['isReminder'] ?? false,
-        actionItems: parsed['actionItems'] != null
-            ? List<String>.from(parsed['actionItems'])
+        structuredActionsJson: structuredActions != null && structuredActions.isNotEmpty
+            ? jsonEncode(structuredActions)
             : null,
       );
-    } catch (e) {
-      // If JSON parsing fails, return a basic result with the raw text
-      print('JSON parsing failed, using fallback. Error: $e');
-      print('Raw text was: $jsonText');
+
+      // Log success with action count
+      if (structuredActions != null && structuredActions.isNotEmpty) {
+        print('AI extracted ${structuredActions.length} action items');
+      }
+
+      return result;
+    } catch (e, stackTrace) {
+      // If JSON parsing fails, try to extract actionItems manually
+      print('JSON parsing failed: $e');
+      print('Stack: $stackTrace');
+      print('Attempting to extract data from raw text...');
+
+      // Try to extract actionItems even if full JSON parsing fails
+      List<Map<String, dynamic>>? fallbackActions;
+      try {
+        // Look for actionItems array in the text
+        final actionItemsMatch = RegExp(r'"actionItems"\s*:\s*\[([\s\S]*?)\]').firstMatch(jsonText);
+        if (actionItemsMatch != null) {
+          final actionItemsJson = '[${actionItemsMatch.group(1)}]';
+          final items = jsonDecode(actionItemsJson);
+          if (items is List && items.isNotEmpty) {
+            fallbackActions = [];
+            for (final item in items) {
+              if (item is Map) {
+                fallbackActions.add(Map<String, dynamic>.from(item));
+              }
+            }
+            print('Fallback: extracted ${fallbackActions.length} action items');
+          }
+        }
+      } catch (e2) {
+        print('Fallback extraction also failed: $e2');
+      }
 
       return AIProcessingResult(
         extractedText: text.length > 500 ? text.substring(0, 500) : text,
-        description: 'Content captured (AI parsing had issues)',
+        description: 'Content captured',
         tags: ['captured'],
         category: 'Other',
         isReminder: false,
-        actionItems: null,
+        structuredActionsJson: fallbackActions != null && fallbackActions.isNotEmpty
+            ? jsonEncode(fallbackActions)
+            : null,
       );
     }
   }

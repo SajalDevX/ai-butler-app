@@ -20,15 +20,17 @@ import 'capture_request.dart' as _i8;
 import 'collection.dart' as _i9;
 import 'dashboard_stats.dart' as _i10;
 import 'morning_briefing.dart' as _i11;
-import 'reminder.dart' as _i12;
-import 'search_query.dart' as _i13;
-import 'search_request.dart' as _i14;
-import 'search_result.dart' as _i15;
-import 'user_preference.dart' as _i16;
-import 'weekly_digest.dart' as _i17;
-import 'package:recall_butler_server/src/generated/action.dart' as _i18;
-import 'package:recall_butler_server/src/generated/capture.dart' as _i19;
-import 'package:recall_butler_server/src/generated/collection.dart' as _i20;
+import 'quick_analysis_result.dart' as _i12;
+import 'reminder.dart' as _i13;
+import 'search_query.dart' as _i14;
+import 'search_request.dart' as _i15;
+import 'search_result.dart' as _i16;
+import 'token_usage_history.dart' as _i17;
+import 'user_preference.dart' as _i18;
+import 'weekly_digest.dart' as _i19;
+import 'package:recall_butler_server/src/generated/action.dart' as _i20;
+import 'package:recall_butler_server/src/generated/capture.dart' as _i21;
+import 'package:recall_butler_server/src/generated/collection.dart' as _i22;
 export 'greeting.dart';
 export 'action.dart';
 export 'ai_processing_result.dart';
@@ -38,10 +40,12 @@ export 'capture_request.dart';
 export 'collection.dart';
 export 'dashboard_stats.dart';
 export 'morning_briefing.dart';
+export 'quick_analysis_result.dart';
 export 'reminder.dart';
 export 'search_query.dart';
 export 'search_request.dart';
 export 'search_result.dart';
+export 'token_usage_history.dart';
 export 'user_preference.dart';
 export 'weekly_digest.dart';
 
@@ -98,6 +102,12 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ColumnDefinition(
           name: 'dueAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'reminderAt',
           columnType: _i2.ColumnType.timestampWithoutTimeZone,
           isNullable: true,
           dartType: 'DateTime?',
@@ -194,6 +204,19 @@ class Protocol extends _i1.SerializationManagerServer {
           isUnique: false,
           isPrimary: false,
         ),
+        _i2.IndexDefinition(
+          indexName: 'action_reminder_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'reminderAt',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
       ],
       managed: true,
     ),
@@ -230,6 +253,18 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ColumnDefinition(
           name: 'thumbnailUrl',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'quickDescription',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'quickType',
           columnType: _i2.ColumnType.text,
           isNullable: true,
           dartType: 'String?',
@@ -282,6 +317,24 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: false,
           dartType: 'String',
         ),
+        _i2.ColumnDefinition(
+          name: 'processingProgress',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'processedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'errorMessage',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -331,6 +384,19 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'category',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'capture_status_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'processingStatus',
             )
           ],
           type: 'btree',
@@ -716,6 +782,129 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'token_usage_history',
+      dartName: 'TokenUsageHistory',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'token_usage_history_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'contentType',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'complexityBucket',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'complexityScore',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'tokensAllocated',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'tokensUsed',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'wasComplete',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isQuickAnalysis',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'token_usage_history_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'token_history_type_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'contentType',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'complexityBucket',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'token_history_created_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'createdAt',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'token_history_quick_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'isQuickAnalysis',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'user_preference',
       dartName: 'UserPreference',
       schema: 'public',
@@ -838,23 +1027,29 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i11.MorningBriefing) {
       return _i11.MorningBriefing.fromJson(data) as T;
     }
-    if (t == _i12.Reminder) {
-      return _i12.Reminder.fromJson(data) as T;
+    if (t == _i12.QuickAnalysisResult) {
+      return _i12.QuickAnalysisResult.fromJson(data) as T;
     }
-    if (t == _i13.SearchQuery) {
-      return _i13.SearchQuery.fromJson(data) as T;
+    if (t == _i13.Reminder) {
+      return _i13.Reminder.fromJson(data) as T;
     }
-    if (t == _i14.SearchRequest) {
-      return _i14.SearchRequest.fromJson(data) as T;
+    if (t == _i14.SearchQuery) {
+      return _i14.SearchQuery.fromJson(data) as T;
     }
-    if (t == _i15.SearchResult) {
-      return _i15.SearchResult.fromJson(data) as T;
+    if (t == _i15.SearchRequest) {
+      return _i15.SearchRequest.fromJson(data) as T;
     }
-    if (t == _i16.UserPreference) {
-      return _i16.UserPreference.fromJson(data) as T;
+    if (t == _i16.SearchResult) {
+      return _i16.SearchResult.fromJson(data) as T;
     }
-    if (t == _i17.WeeklyDigest) {
-      return _i17.WeeklyDigest.fromJson(data) as T;
+    if (t == _i17.TokenUsageHistory) {
+      return _i17.TokenUsageHistory.fromJson(data) as T;
+    }
+    if (t == _i18.UserPreference) {
+      return _i18.UserPreference.fromJson(data) as T;
+    }
+    if (t == _i19.WeeklyDigest) {
+      return _i19.WeeklyDigest.fromJson(data) as T;
     }
     if (t == _i1.getType<_i3.Greeting?>()) {
       return (data != null ? _i3.Greeting.fromJson(data) : null) as T;
@@ -883,23 +1078,30 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i11.MorningBriefing?>()) {
       return (data != null ? _i11.MorningBriefing.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.Reminder?>()) {
-      return (data != null ? _i12.Reminder.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.QuickAnalysisResult?>()) {
+      return (data != null ? _i12.QuickAnalysisResult.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i13.SearchQuery?>()) {
-      return (data != null ? _i13.SearchQuery.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.Reminder?>()) {
+      return (data != null ? _i13.Reminder.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.SearchRequest?>()) {
-      return (data != null ? _i14.SearchRequest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.SearchQuery?>()) {
+      return (data != null ? _i14.SearchQuery.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.SearchResult?>()) {
-      return (data != null ? _i15.SearchResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.SearchRequest?>()) {
+      return (data != null ? _i15.SearchRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.UserPreference?>()) {
-      return (data != null ? _i16.UserPreference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.SearchResult?>()) {
+      return (data != null ? _i16.SearchResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.WeeklyDigest?>()) {
-      return (data != null ? _i17.WeeklyDigest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.TokenUsageHistory?>()) {
+      return (data != null ? _i17.TokenUsageHistory.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.UserPreference?>()) {
+      return (data != null ? _i18.UserPreference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.WeeklyDigest?>()) {
+      return (data != null ? _i19.WeeklyDigest.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -918,8 +1120,8 @@ class Protocol extends _i1.SerializationManagerServer {
           ? (data as List).map((e) => deserialize<String>(e)).toList()
           : null) as T;
     }
-    if (t == List<_i18.Action>) {
-      return (data as List).map((e) => deserialize<_i18.Action>(e)).toList()
+    if (t == List<_i20.Action>) {
+      return (data as List).map((e) => deserialize<_i20.Action>(e)).toList()
           as T;
     }
     if (t == List<Map<String, dynamic>>) {
@@ -931,12 +1133,12 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
     }
-    if (t == List<_i19.Capture>) {
-      return (data as List).map((e) => deserialize<_i19.Capture>(e)).toList()
+    if (t == List<_i21.Capture>) {
+      return (data as List).map((e) => deserialize<_i21.Capture>(e)).toList()
           as T;
     }
-    if (t == List<_i20.Collection>) {
-      return (data as List).map((e) => deserialize<_i20.Collection>(e)).toList()
+    if (t == List<_i22.Collection>) {
+      return (data as List).map((e) => deserialize<_i22.Collection>(e)).toList()
           as T;
     }
     if (t == List<String>) {
@@ -979,22 +1181,28 @@ class Protocol extends _i1.SerializationManagerServer {
     if (data is _i11.MorningBriefing) {
       return 'MorningBriefing';
     }
-    if (data is _i12.Reminder) {
+    if (data is _i12.QuickAnalysisResult) {
+      return 'QuickAnalysisResult';
+    }
+    if (data is _i13.Reminder) {
       return 'Reminder';
     }
-    if (data is _i13.SearchQuery) {
+    if (data is _i14.SearchQuery) {
       return 'SearchQuery';
     }
-    if (data is _i14.SearchRequest) {
+    if (data is _i15.SearchRequest) {
       return 'SearchRequest';
     }
-    if (data is _i15.SearchResult) {
+    if (data is _i16.SearchResult) {
       return 'SearchResult';
     }
-    if (data is _i16.UserPreference) {
+    if (data is _i17.TokenUsageHistory) {
+      return 'TokenUsageHistory';
+    }
+    if (data is _i18.UserPreference) {
       return 'UserPreference';
     }
-    if (data is _i17.WeeklyDigest) {
+    if (data is _i19.WeeklyDigest) {
       return 'WeeklyDigest';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1037,23 +1245,29 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'MorningBriefing') {
       return deserialize<_i11.MorningBriefing>(data['data']);
     }
+    if (dataClassName == 'QuickAnalysisResult') {
+      return deserialize<_i12.QuickAnalysisResult>(data['data']);
+    }
     if (dataClassName == 'Reminder') {
-      return deserialize<_i12.Reminder>(data['data']);
+      return deserialize<_i13.Reminder>(data['data']);
     }
     if (dataClassName == 'SearchQuery') {
-      return deserialize<_i13.SearchQuery>(data['data']);
+      return deserialize<_i14.SearchQuery>(data['data']);
     }
     if (dataClassName == 'SearchRequest') {
-      return deserialize<_i14.SearchRequest>(data['data']);
+      return deserialize<_i15.SearchRequest>(data['data']);
     }
     if (dataClassName == 'SearchResult') {
-      return deserialize<_i15.SearchResult>(data['data']);
+      return deserialize<_i16.SearchResult>(data['data']);
+    }
+    if (dataClassName == 'TokenUsageHistory') {
+      return deserialize<_i17.TokenUsageHistory>(data['data']);
     }
     if (dataClassName == 'UserPreference') {
-      return deserialize<_i16.UserPreference>(data['data']);
+      return deserialize<_i18.UserPreference>(data['data']);
     }
     if (dataClassName == 'WeeklyDigest') {
-      return deserialize<_i17.WeeklyDigest>(data['data']);
+      return deserialize<_i19.WeeklyDigest>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1079,12 +1293,14 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i7.CaptureCollection.t;
       case _i9.Collection:
         return _i9.Collection.t;
-      case _i12.Reminder:
-        return _i12.Reminder.t;
-      case _i13.SearchQuery:
-        return _i13.SearchQuery.t;
-      case _i16.UserPreference:
-        return _i16.UserPreference.t;
+      case _i13.Reminder:
+        return _i13.Reminder.t;
+      case _i14.SearchQuery:
+        return _i14.SearchQuery.t;
+      case _i17.TokenUsageHistory:
+        return _i17.TokenUsageHistory.t;
+      case _i18.UserPreference:
+        return _i18.UserPreference.t;
     }
     return null;
   }

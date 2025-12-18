@@ -7,17 +7,19 @@ fields:
   userId: int
   ### Foreign key to source capture (optional - actions can be standalone)
   captureId: int?
-  ### Type: task, reminder, event, shopping
+  ### Type: task, reminder, event, shopping, birthday, anniversary, deadline, appointment
   type: String
   ### Action title/description
   title: String
   ### Detailed notes (optional)
   notes: String?
-  ### Due date/time (optional)
+  ### Due date/time - when the event occurs
   dueAt: DateTime?
+  ### Reminder date/time - when to remind the user (calculated from dueAt - reminderDaysBefore)
+  reminderAt: DateTime?
   ### Whether the action is completed
   isCompleted: bool
-  ### Priority: low, medium, high
+  ### Priority: low, medium, high (AI-determined based on event importance)
   priority: String
   ### Creation timestamp
   createdAt: DateTime
@@ -33,3 +35,5 @@ indexes:
     fields: dueAt
   action_completed_idx:
     fields: isCompleted
+  action_reminder_idx:
+    fields: reminderAt

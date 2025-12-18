@@ -1,0 +1,29 @@
+### TokenUsageHistory - Tracks token usage for adaptive learning
+class: TokenUsageHistory
+table: token_usage_history
+
+fields:
+  ### Content type detected (document, photo, recipe, etc.)
+  contentType: String
+  ### Complexity bucket (simple, medium, complex)
+  complexityBucket: String
+  ### Exact complexity score 0.0-1.0
+  complexityScore: double?
+  ### Tokens allocated for this request
+  tokensAllocated: int
+  ### Actual tokens used in response
+  tokensUsed: int
+  ### Whether the response was complete (not truncated)
+  wasComplete: bool
+  ### Whether this was quick analysis (sync) or deep analysis (async)
+  isQuickAnalysis: bool
+  ### Timestamp for tracking
+  createdAt: DateTime
+
+indexes:
+  token_history_type_idx:
+    fields: contentType, complexityBucket
+  token_history_created_idx:
+    fields: createdAt
+  token_history_quick_idx:
+    fields: isQuickAnalysis

@@ -21,6 +21,7 @@ abstract class Action implements _i1.SerializableModel {
     required this.title,
     this.notes,
     this.dueAt,
+    this.reminderAt,
     required this.isCompleted,
     required this.priority,
     required this.createdAt,
@@ -35,6 +36,7 @@ abstract class Action implements _i1.SerializableModel {
     required String title,
     String? notes,
     DateTime? dueAt,
+    DateTime? reminderAt,
     required bool isCompleted,
     required String priority,
     required DateTime createdAt,
@@ -52,6 +54,9 @@ abstract class Action implements _i1.SerializableModel {
       dueAt: jsonSerialization['dueAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['dueAt']),
+      reminderAt: jsonSerialization['reminderAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['reminderAt']),
       isCompleted: jsonSerialization['isCompleted'] as bool,
       priority: jsonSerialization['priority'] as String,
       createdAt:
@@ -74,7 +79,7 @@ abstract class Action implements _i1.SerializableModel {
   /// Foreign key to source capture (optional - actions can be standalone)
   int? captureId;
 
-  /// Type: task, reminder, event, shopping
+  /// Type: task, reminder, event, shopping, birthday, anniversary, deadline, appointment
   String type;
 
   /// Action title/description
@@ -83,13 +88,16 @@ abstract class Action implements _i1.SerializableModel {
   /// Detailed notes (optional)
   String? notes;
 
-  /// Due date/time (optional)
+  /// Due date/time - when the event occurs
   DateTime? dueAt;
+
+  /// Reminder date/time - when to remind the user (calculated from dueAt - reminderDaysBefore)
+  DateTime? reminderAt;
 
   /// Whether the action is completed
   bool isCompleted;
 
-  /// Priority: low, medium, high
+  /// Priority: low, medium, high (AI-determined based on event importance)
   String priority;
 
   /// Creation timestamp
@@ -109,6 +117,7 @@ abstract class Action implements _i1.SerializableModel {
     String? title,
     String? notes,
     DateTime? dueAt,
+    DateTime? reminderAt,
     bool? isCompleted,
     String? priority,
     DateTime? createdAt,
@@ -124,6 +133,7 @@ abstract class Action implements _i1.SerializableModel {
       'title': title,
       if (notes != null) 'notes': notes,
       if (dueAt != null) 'dueAt': dueAt?.toJson(),
+      if (reminderAt != null) 'reminderAt': reminderAt?.toJson(),
       'isCompleted': isCompleted,
       'priority': priority,
       'createdAt': createdAt.toJson(),
@@ -148,6 +158,7 @@ class _ActionImpl extends Action {
     required String title,
     String? notes,
     DateTime? dueAt,
+    DateTime? reminderAt,
     required bool isCompleted,
     required String priority,
     required DateTime createdAt,
@@ -160,6 +171,7 @@ class _ActionImpl extends Action {
           title: title,
           notes: notes,
           dueAt: dueAt,
+          reminderAt: reminderAt,
           isCompleted: isCompleted,
           priority: priority,
           createdAt: createdAt,
@@ -178,6 +190,7 @@ class _ActionImpl extends Action {
     String? title,
     Object? notes = _Undefined,
     Object? dueAt = _Undefined,
+    Object? reminderAt = _Undefined,
     bool? isCompleted,
     String? priority,
     DateTime? createdAt,
@@ -191,6 +204,7 @@ class _ActionImpl extends Action {
       title: title ?? this.title,
       notes: notes is String? ? notes : this.notes,
       dueAt: dueAt is DateTime? ? dueAt : this.dueAt,
+      reminderAt: reminderAt is DateTime? ? reminderAt : this.reminderAt,
       isCompleted: isCompleted ?? this.isCompleted,
       priority: priority ?? this.priority,
       createdAt: createdAt ?? this.createdAt,

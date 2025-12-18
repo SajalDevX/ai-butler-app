@@ -21,6 +21,7 @@ abstract class AIProcessingResult
     required this.category,
     required this.isReminder,
     this.actionItems,
+    this.structuredActionsJson,
   });
 
   factory AIProcessingResult({
@@ -30,6 +31,7 @@ abstract class AIProcessingResult
     required String category,
     required bool isReminder,
     List<String>? actionItems,
+    String? structuredActionsJson,
   }) = _AIProcessingResultImpl;
 
   factory AIProcessingResult.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -43,6 +45,8 @@ abstract class AIProcessingResult
       actionItems: (jsonSerialization['actionItems'] as List?)
           ?.map((e) => e as String)
           .toList(),
+      structuredActionsJson:
+          jsonSerialization['structuredActionsJson'] as String?,
     );
   }
 
@@ -61,8 +65,11 @@ abstract class AIProcessingResult
   /// Whether this appears to be a reminder
   bool isReminder;
 
-  /// Detected action items (for voice notes)
+  /// Detected action items (legacy format - simple strings)
   List<String>? actionItems;
+
+  /// Structured action items - JSON encoded for flexibility
+  String? structuredActionsJson;
 
   /// Returns a shallow copy of this [AIProcessingResult]
   /// with some or all fields replaced by the given arguments.
@@ -74,6 +81,7 @@ abstract class AIProcessingResult
     String? category,
     bool? isReminder,
     List<String>? actionItems,
+    String? structuredActionsJson,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -84,19 +92,14 @@ abstract class AIProcessingResult
       'category': category,
       'isReminder': isReminder,
       if (actionItems != null) 'actionItems': actionItems?.toJson(),
+      if (structuredActionsJson != null)
+        'structuredActionsJson': structuredActionsJson,
     };
   }
 
   @override
   Map<String, dynamic> toJsonForProtocol() {
-    return {
-      if (extractedText != null) 'extractedText': extractedText,
-      if (description != null) 'description': description,
-      'tags': tags.toJson(),
-      'category': category,
-      'isReminder': isReminder,
-      if (actionItems != null) 'actionItems': actionItems?.toJson(),
-    };
+    return {};
   }
 
   @override
@@ -115,6 +118,7 @@ class _AIProcessingResultImpl extends AIProcessingResult {
     required String category,
     required bool isReminder,
     List<String>? actionItems,
+    String? structuredActionsJson,
   }) : super._(
           extractedText: extractedText,
           description: description,
@@ -122,6 +126,7 @@ class _AIProcessingResultImpl extends AIProcessingResult {
           category: category,
           isReminder: isReminder,
           actionItems: actionItems,
+          structuredActionsJson: structuredActionsJson,
         );
 
   /// Returns a shallow copy of this [AIProcessingResult]
@@ -135,6 +140,7 @@ class _AIProcessingResultImpl extends AIProcessingResult {
     String? category,
     bool? isReminder,
     Object? actionItems = _Undefined,
+    Object? structuredActionsJson = _Undefined,
   }) {
     return AIProcessingResult(
       extractedText:
@@ -146,6 +152,9 @@ class _AIProcessingResultImpl extends AIProcessingResult {
       actionItems: actionItems is List<String>?
           ? actionItems
           : this.actionItems?.map((e0) => e0).toList(),
+      structuredActionsJson: structuredActionsJson is String?
+          ? structuredActionsJson
+          : this.structuredActionsJson,
     );
   }
 }

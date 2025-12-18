@@ -20,6 +20,8 @@ abstract class Capture
     required this.type,
     this.originalUrl,
     this.thumbnailUrl,
+    this.quickDescription,
+    this.quickType,
     this.extractedText,
     this.aiSummary,
     this.tags,
@@ -28,6 +30,9 @@ abstract class Capture
     required this.isReminder,
     this.sourceApp,
     required this.processingStatus,
+    this.processingProgress,
+    this.processedAt,
+    this.errorMessage,
   });
 
   factory Capture({
@@ -36,6 +41,8 @@ abstract class Capture
     required String type,
     String? originalUrl,
     String? thumbnailUrl,
+    String? quickDescription,
+    String? quickType,
     String? extractedText,
     String? aiSummary,
     String? tags,
@@ -44,6 +51,9 @@ abstract class Capture
     required bool isReminder,
     String? sourceApp,
     required String processingStatus,
+    int? processingProgress,
+    DateTime? processedAt,
+    String? errorMessage,
   }) = _CaptureImpl;
 
   factory Capture.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -53,6 +63,8 @@ abstract class Capture
       type: jsonSerialization['type'] as String,
       originalUrl: jsonSerialization['originalUrl'] as String?,
       thumbnailUrl: jsonSerialization['thumbnailUrl'] as String?,
+      quickDescription: jsonSerialization['quickDescription'] as String?,
+      quickType: jsonSerialization['quickType'] as String?,
       extractedText: jsonSerialization['extractedText'] as String?,
       aiSummary: jsonSerialization['aiSummary'] as String?,
       tags: jsonSerialization['tags'] as String?,
@@ -62,6 +74,12 @@ abstract class Capture
       isReminder: jsonSerialization['isReminder'] as bool,
       sourceApp: jsonSerialization['sourceApp'] as String?,
       processingStatus: jsonSerialization['processingStatus'] as String,
+      processingProgress: jsonSerialization['processingProgress'] as int?,
+      processedAt: jsonSerialization['processedAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['processedAt']),
+      errorMessage: jsonSerialization['errorMessage'] as String?,
     );
   }
 
@@ -84,7 +102,12 @@ abstract class Capture
   /// Compressed thumbnail URL
   String? thumbnailUrl;
 
-  /// AI-extracted text content from the capture
+  /// Quick analysis (populated immediately in sync phase)
+  String? quickDescription;
+
+  String? quickType;
+
+  /// Full analysis (populated by background worker)
   String? extractedText;
 
   /// AI-generated description/summary
@@ -105,8 +128,17 @@ abstract class Capture
   /// Source app or URL where content was captured from
   String? sourceApp;
 
-  /// Processing status: pending, processing, completed, failed
+  /// Processing status: pending, analyzing, processing, completed, failed
   String processingStatus;
+
+  /// Processing progress 0-100
+  int? processingProgress;
+
+  /// When full processing completed
+  DateTime? processedAt;
+
+  /// Error message if failed
+  String? errorMessage;
 
   @override
   _i1.Table<int?> get table => t;
@@ -120,6 +152,8 @@ abstract class Capture
     String? type,
     String? originalUrl,
     String? thumbnailUrl,
+    String? quickDescription,
+    String? quickType,
     String? extractedText,
     String? aiSummary,
     String? tags,
@@ -128,6 +162,9 @@ abstract class Capture
     bool? isReminder,
     String? sourceApp,
     String? processingStatus,
+    int? processingProgress,
+    DateTime? processedAt,
+    String? errorMessage,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -137,6 +174,8 @@ abstract class Capture
       'type': type,
       if (originalUrl != null) 'originalUrl': originalUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (quickDescription != null) 'quickDescription': quickDescription,
+      if (quickType != null) 'quickType': quickType,
       if (extractedText != null) 'extractedText': extractedText,
       if (aiSummary != null) 'aiSummary': aiSummary,
       if (tags != null) 'tags': tags,
@@ -145,6 +184,9 @@ abstract class Capture
       'isReminder': isReminder,
       if (sourceApp != null) 'sourceApp': sourceApp,
       'processingStatus': processingStatus,
+      if (processingProgress != null) 'processingProgress': processingProgress,
+      if (processedAt != null) 'processedAt': processedAt?.toJson(),
+      if (errorMessage != null) 'errorMessage': errorMessage,
     };
   }
 
@@ -156,6 +198,8 @@ abstract class Capture
       'type': type,
       if (originalUrl != null) 'originalUrl': originalUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      if (quickDescription != null) 'quickDescription': quickDescription,
+      if (quickType != null) 'quickType': quickType,
       if (extractedText != null) 'extractedText': extractedText,
       if (aiSummary != null) 'aiSummary': aiSummary,
       if (tags != null) 'tags': tags,
@@ -164,6 +208,9 @@ abstract class Capture
       'isReminder': isReminder,
       if (sourceApp != null) 'sourceApp': sourceApp,
       'processingStatus': processingStatus,
+      if (processingProgress != null) 'processingProgress': processingProgress,
+      if (processedAt != null) 'processedAt': processedAt?.toJson(),
+      if (errorMessage != null) 'errorMessage': errorMessage,
     };
   }
 
@@ -206,6 +253,8 @@ class _CaptureImpl extends Capture {
     required String type,
     String? originalUrl,
     String? thumbnailUrl,
+    String? quickDescription,
+    String? quickType,
     String? extractedText,
     String? aiSummary,
     String? tags,
@@ -214,12 +263,17 @@ class _CaptureImpl extends Capture {
     required bool isReminder,
     String? sourceApp,
     required String processingStatus,
+    int? processingProgress,
+    DateTime? processedAt,
+    String? errorMessage,
   }) : super._(
           id: id,
           userId: userId,
           type: type,
           originalUrl: originalUrl,
           thumbnailUrl: thumbnailUrl,
+          quickDescription: quickDescription,
+          quickType: quickType,
           extractedText: extractedText,
           aiSummary: aiSummary,
           tags: tags,
@@ -228,6 +282,9 @@ class _CaptureImpl extends Capture {
           isReminder: isReminder,
           sourceApp: sourceApp,
           processingStatus: processingStatus,
+          processingProgress: processingProgress,
+          processedAt: processedAt,
+          errorMessage: errorMessage,
         );
 
   /// Returns a shallow copy of this [Capture]
@@ -240,6 +297,8 @@ class _CaptureImpl extends Capture {
     String? type,
     Object? originalUrl = _Undefined,
     Object? thumbnailUrl = _Undefined,
+    Object? quickDescription = _Undefined,
+    Object? quickType = _Undefined,
     Object? extractedText = _Undefined,
     Object? aiSummary = _Undefined,
     Object? tags = _Undefined,
@@ -248,6 +307,9 @@ class _CaptureImpl extends Capture {
     bool? isReminder,
     Object? sourceApp = _Undefined,
     String? processingStatus,
+    Object? processingProgress = _Undefined,
+    Object? processedAt = _Undefined,
+    Object? errorMessage = _Undefined,
   }) {
     return Capture(
       id: id is int? ? id : this.id,
@@ -255,6 +317,10 @@ class _CaptureImpl extends Capture {
       type: type ?? this.type,
       originalUrl: originalUrl is String? ? originalUrl : this.originalUrl,
       thumbnailUrl: thumbnailUrl is String? ? thumbnailUrl : this.thumbnailUrl,
+      quickDescription: quickDescription is String?
+          ? quickDescription
+          : this.quickDescription,
+      quickType: quickType is String? ? quickType : this.quickType,
       extractedText:
           extractedText is String? ? extractedText : this.extractedText,
       aiSummary: aiSummary is String? ? aiSummary : this.aiSummary,
@@ -264,6 +330,11 @@ class _CaptureImpl extends Capture {
       isReminder: isReminder ?? this.isReminder,
       sourceApp: sourceApp is String? ? sourceApp : this.sourceApp,
       processingStatus: processingStatus ?? this.processingStatus,
+      processingProgress: processingProgress is int?
+          ? processingProgress
+          : this.processingProgress,
+      processedAt: processedAt is DateTime? ? processedAt : this.processedAt,
+      errorMessage: errorMessage is String? ? errorMessage : this.errorMessage,
     );
   }
 }
@@ -284,6 +355,14 @@ class CaptureTable extends _i1.Table<int?> {
     );
     thumbnailUrl = _i1.ColumnString(
       'thumbnailUrl',
+      this,
+    );
+    quickDescription = _i1.ColumnString(
+      'quickDescription',
+      this,
+    );
+    quickType = _i1.ColumnString(
+      'quickType',
       this,
     );
     extractedText = _i1.ColumnString(
@@ -318,6 +397,18 @@ class CaptureTable extends _i1.Table<int?> {
       'processingStatus',
       this,
     );
+    processingProgress = _i1.ColumnInt(
+      'processingProgress',
+      this,
+    );
+    processedAt = _i1.ColumnDateTime(
+      'processedAt',
+      this,
+    );
+    errorMessage = _i1.ColumnString(
+      'errorMessage',
+      this,
+    );
   }
 
   /// Foreign key to user
@@ -332,7 +423,12 @@ class CaptureTable extends _i1.Table<int?> {
   /// Compressed thumbnail URL
   late final _i1.ColumnString thumbnailUrl;
 
-  /// AI-extracted text content from the capture
+  /// Quick analysis (populated immediately in sync phase)
+  late final _i1.ColumnString quickDescription;
+
+  late final _i1.ColumnString quickType;
+
+  /// Full analysis (populated by background worker)
   late final _i1.ColumnString extractedText;
 
   /// AI-generated description/summary
@@ -353,8 +449,17 @@ class CaptureTable extends _i1.Table<int?> {
   /// Source app or URL where content was captured from
   late final _i1.ColumnString sourceApp;
 
-  /// Processing status: pending, processing, completed, failed
+  /// Processing status: pending, analyzing, processing, completed, failed
   late final _i1.ColumnString processingStatus;
+
+  /// Processing progress 0-100
+  late final _i1.ColumnInt processingProgress;
+
+  /// When full processing completed
+  late final _i1.ColumnDateTime processedAt;
+
+  /// Error message if failed
+  late final _i1.ColumnString errorMessage;
 
   @override
   List<_i1.Column> get columns => [
@@ -363,6 +468,8 @@ class CaptureTable extends _i1.Table<int?> {
         type,
         originalUrl,
         thumbnailUrl,
+        quickDescription,
+        quickType,
         extractedText,
         aiSummary,
         tags,
@@ -371,6 +478,9 @@ class CaptureTable extends _i1.Table<int?> {
         isReminder,
         sourceApp,
         processingStatus,
+        processingProgress,
+        processedAt,
+        errorMessage,
       ];
 }
 

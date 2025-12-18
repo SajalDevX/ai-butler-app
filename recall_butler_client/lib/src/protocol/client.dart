@@ -190,6 +190,9 @@ class EndpointCapture extends _i1.EndpointRef {
   String get name => 'capture';
 
   /// Creates a new capture from uploaded content
+  /// Uses two-phase processing:
+  /// - Phase 1 (Sync): Quick AI analysis, returns in <2 seconds
+  /// - Phase 2 (Async): Deep analysis runs in background
   _i2.Future<_i4.Capture> createCapture(_i5.CaptureRequest request) =>
       caller.callServerEndpoint<_i4.Capture>(
         'capture',

@@ -1,0 +1,11 @@
+### QuickAnalysisResult - fast initial analysis result
+class: QuickAnalysisResult
+serverOnly: true
+
+fields:
+  ### Brief description of the content
+  description: String
+  ### Detected type: recipe, task, reminder, event, note, shopping, calendar, other
+  detectedType: String
+  ### Confidence score 0.0-1.0
+  confidence: double

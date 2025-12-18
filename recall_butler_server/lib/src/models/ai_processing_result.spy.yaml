@@ -1,5 +1,6 @@
 ### AIProcessingResult - result from Gemini AI processing
 class: AIProcessingResult
+serverOnly: true
 
 fields:
   ### Extracted text from the content
@@ -12,5 +13,7 @@ fields:
   category: String
   ### Whether this appears to be a reminder
   isReminder: bool
-  ### Detected action items (for voice notes)
+  ### Detected action items (legacy format - simple strings)
   actionItems: List<String>?
+  ### Structured action items - JSON encoded for flexibility
+  structuredActionsJson: String?
