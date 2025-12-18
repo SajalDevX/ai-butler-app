@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 import '../../providers/preferences_provider.dart';
+import '../../providers/google_auth_provider.dart';
 import '../../services/overlay_service.dart';
 import '../../theme/colors.dart';
 
@@ -60,6 +62,16 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
           ],
+
+          // Google Integration Section
+          _SectionHeader(
+            icon: Iconsax.link,
+            title: 'Google Integration',
+            subtitle: 'Connect Gmail & Calendar',
+          ),
+          const SizedBox(height: 12),
+          _GoogleIntegrationCard(),
+          const SizedBox(height: 24),
 
           // Notifications Section
           _SectionHeader(
@@ -410,6 +422,271 @@ class _NavigationTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
+    );
+  }
+}
+
+/// Google Integration Card with connect/disconnect functionality
+class _GoogleIntegrationCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(googleAuthProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          if (authState.isAuthenticated) ...[
+            // Connected state
+            _buildConnectedHeader(context, ref, authState),
+            const Divider(height: 1),
+            _SwitchTile(
+              icon: Iconsax.sms,
+              title: 'Gmail Integration',
+              subtitle: authState.lastGmailSync != null
+                  ? 'Last sync: ${timeago.format(authState.lastGmailSync!)}'
+                  : 'Sync emails and get AI summaries',
+              value: authState.gmailEnabled,
+              onChanged: (value) {
+                ref.read(googleAuthProvider.notifier).updateFeatures(
+                      enableGmail: value,
+                      enableCalendar: authState.calendarEnabled,
+                    );
+              },
+            ),
+            const Divider(height: 1),
+            _SwitchTile(
+              icon: Iconsax.calendar,
+              title: 'Calendar Integration',
+              subtitle: authState.lastCalendarSync != null
+                  ? 'Last sync: ${timeago.format(authState.lastCalendarSync!)}'
+                  : 'Sync events and get meeting prep',
+              value: authState.calendarEnabled,
+              onChanged: (value) {
+                ref.read(googleAuthProvider.notifier).updateFeatures(
+                      enableGmail: authState.gmailEnabled,
+                      enableCalendar: value,
+                    );
+              },
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Iconsax.refresh, size: 20, color: AppColors.textSecondary),
+              ),
+              title: const Text('Sync Now'),
+              subtitle: const Text(
+                'Manually sync emails and events',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              trailing: authState.isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Iconsax.arrow_right_3, size: 16, color: AppColors.textTertiary),
+              onTap: authState.isLoading
+                  ? null
+                  : () => ref.read(googleAuthProvider.notifier).syncNow(),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Iconsax.logout, size: 20, color: Colors.red),
+              ),
+              title: const Text('Disconnect', style: TextStyle(color: Colors.red)),
+              subtitle: const Text(
+                'Remove Google account access',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              onTap: () => _showDisconnectDialog(context, ref),
+            ),
+          ] else ...[
+            // Not connected state
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Iconsax.global,
+                      size: 40,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Connect Google Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Get AI-powered email summaries, smart prioritization, and meeting preparation briefs.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () => _connectGoogle(context, ref),
+                      icon: authState.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Iconsax.login),
+                      label: Text(authState.isLoading ? 'Connecting...' : 'Connect with Google'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (authState.error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      authState.error!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectedHeader(
+    BuildContext context,
+    WidgetRef ref,
+    GoogleAuthState authState,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Iconsax.tick_circle, size: 24, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Google Connected',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Your account is linked',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _connectGoogle(BuildContext context, WidgetRef ref) async {
+    final success = await ref.read(googleAuthProvider.notifier).signIn();
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google account connected successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  void _showDisconnectDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Disconnect Google?'),
+        content: const Text(
+          'This will remove access to your Gmail and Calendar. '
+          'Your synced data will be deleted from the server.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await ref.read(googleAuthProvider.notifier).disconnect();
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Google account disconnected'),
+                  ),
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Disconnect'),
+          ),
+        ],
+      ),
     );
   }
 }

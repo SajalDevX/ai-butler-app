@@ -14,13 +14,15 @@ import '../endpoints/action_endpoint.dart' as _i2;
 import '../endpoints/capture_endpoint.dart' as _i3;
 import '../endpoints/collection_endpoint.dart' as _i4;
 import '../endpoints/dashboard_endpoint.dart' as _i5;
-import '../endpoints/insight_endpoint.dart' as _i6;
-import '../endpoints/search_endpoint.dart' as _i7;
-import '../endpoints/user_preference_endpoint.dart' as _i8;
-import '../greeting_endpoint.dart' as _i9;
+import '../endpoints/google_auth_endpoint.dart' as _i6;
+import '../endpoints/insight_endpoint.dart' as _i7;
+import '../endpoints/integration_endpoint.dart' as _i8;
+import '../endpoints/search_endpoint.dart' as _i9;
+import '../endpoints/user_preference_endpoint.dart' as _i10;
+import '../greeting_endpoint.dart' as _i11;
 import 'package:recall_butler_server/src/generated/capture_request.dart'
-    as _i10;
-import 'package:recall_butler_server/src/generated/search_request.dart' as _i11;
+    as _i12;
+import 'package:recall_butler_server/src/generated/search_request.dart' as _i13;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -50,25 +52,37 @@ class Endpoints extends _i1.EndpointDispatch {
           'dashboard',
           null,
         ),
-      'insight': _i6.InsightEndpoint()
+      'googleAuth': _i6.GoogleAuthEndpoint()
+        ..initialize(
+          server,
+          'googleAuth',
+          null,
+        ),
+      'insight': _i7.InsightEndpoint()
         ..initialize(
           server,
           'insight',
           null,
         ),
-      'search': _i7.SearchEndpoint()
+      'integration': _i8.IntegrationEndpoint()
+        ..initialize(
+          server,
+          'integration',
+          null,
+        ),
+      'search': _i9.SearchEndpoint()
         ..initialize(
           server,
           'search',
           null,
         ),
-      'userPreference': _i8.UserPreferenceEndpoint()
+      'userPreference': _i10.UserPreferenceEndpoint()
         ..initialize(
           server,
           'userPreference',
           null,
         ),
-      'greeting': _i9.GreetingEndpoint()
+      'greeting': _i11.GreetingEndpoint()
         ..initialize(
           server,
           'greeting',
@@ -383,7 +397,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i10.CaptureRequest>(),
+              type: _i1.getType<_i12.CaptureRequest>(),
               nullable: false,
             )
           },
@@ -733,6 +747,93 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['googleAuth'] = _i1.EndpointConnector(
+      name: 'googleAuth',
+      endpoint: endpoints['googleAuth']!,
+      methodConnectors: {
+        'exchangeCode': _i1.MethodConnector(
+          name: 'exchangeCode',
+          params: {
+            'authCode': _i1.ParameterDescription(
+              name: 'authCode',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'redirectUri': _i1.ParameterDescription(
+              name: 'redirectUri',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'enableGmail': _i1.ParameterDescription(
+              name: 'enableGmail',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'enableCalendar': _i1.ParameterDescription(
+              name: 'enableCalendar',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['googleAuth'] as _i6.GoogleAuthEndpoint).exchangeCode(
+            session,
+            params['authCode'],
+            params['redirectUri'],
+            params['enableGmail'],
+            params['enableCalendar'],
+          ),
+        ),
+        'getAuthStatus': _i1.MethodConnector(
+          name: 'getAuthStatus',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['googleAuth'] as _i6.GoogleAuthEndpoint)
+                  .getAuthStatus(session),
+        ),
+        'updateFeatures': _i1.MethodConnector(
+          name: 'updateFeatures',
+          params: {
+            'enableGmail': _i1.ParameterDescription(
+              name: 'enableGmail',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+            'enableCalendar': _i1.ParameterDescription(
+              name: 'enableCalendar',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['googleAuth'] as _i6.GoogleAuthEndpoint)
+                  .updateFeatures(
+            session,
+            params['enableGmail'],
+            params['enableCalendar'],
+          ),
+        ),
+        'revokeAccess': _i1.MethodConnector(
+          name: 'revokeAccess',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['googleAuth'] as _i6.GoogleAuthEndpoint)
+                  .revokeAccess(session),
+        ),
+      },
+    );
     connectors['insight'] = _i1.EndpointConnector(
       name: 'insight',
       endpoint: endpoints['insight']!,
@@ -744,7 +845,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['insight'] as _i6.InsightEndpoint)
+              (endpoints['insight'] as _i7.InsightEndpoint)
                   .getProactiveInsights(session),
         ),
         'getRelatedCaptures': _i1.MethodConnector(
@@ -760,7 +861,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['insight'] as _i6.InsightEndpoint).getRelatedCaptures(
+              (endpoints['insight'] as _i7.InsightEndpoint).getRelatedCaptures(
             session,
             params['captureId'],
           ),
@@ -772,7 +873,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['insight'] as _i6.InsightEndpoint)
+              (endpoints['insight'] as _i7.InsightEndpoint)
                   .getWeeklyDigest(session),
         ),
         'getStatistics': _i1.MethodConnector(
@@ -782,7 +883,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['insight'] as _i6.InsightEndpoint)
+              (endpoints['insight'] as _i7.InsightEndpoint)
                   .getStatistics(session),
         ),
         'dismissInsight': _i1.MethodConnector(
@@ -798,10 +899,330 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['insight'] as _i6.InsightEndpoint).dismissInsight(
+              (endpoints['insight'] as _i7.InsightEndpoint).dismissInsight(
             session,
             params['captureId'],
           ),
+        ),
+      },
+    );
+    connectors['integration'] = _i1.EndpointConnector(
+      name: 'integration',
+      endpoint: endpoints['integration']!,
+      methodConnectors: {
+        'getEmails': _i1.MethodConnector(
+          name: 'getEmails',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'category': _i1.ParameterDescription(
+              name: 'category',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'minImportance': _i1.ParameterDescription(
+              name: 'minImportance',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'requiresAction': _i1.ParameterDescription(
+              name: 'requiresAction',
+              type: _i1.getType<bool?>(),
+              nullable: true,
+            ),
+            'unreadOnly': _i1.ParameterDescription(
+              name: 'unreadOnly',
+              type: _i1.getType<bool?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint).getEmails(
+            session,
+            limit: params['limit'],
+            offset: params['offset'],
+            category: params['category'],
+            minImportance: params['minImportance'],
+            requiresAction: params['requiresAction'],
+            unreadOnly: params['unreadOnly'],
+          ),
+        ),
+        'getEmail': _i1.MethodConnector(
+          name: 'getEmail',
+          params: {
+            'emailId': _i1.ParameterDescription(
+              name: 'emailId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint).getEmail(
+            session,
+            params['emailId'],
+          ),
+        ),
+        'getImportantEmails': _i1.MethodConnector(
+          name: 'getImportantEmails',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getImportantEmails(
+            session,
+            limit: params['limit'],
+          ),
+        ),
+        'getActionableEmails': _i1.MethodConnector(
+          name: 'getActionableEmails',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getActionableEmails(
+            session,
+            limit: params['limit'],
+          ),
+        ),
+        'generateDraft': _i1.MethodConnector(
+          name: 'generateDraft',
+          params: {
+            'emailId': _i1.ParameterDescription(
+              name: 'emailId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'tone': _i1.ParameterDescription(
+              name: 'tone',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'additionalContext': _i1.ParameterDescription(
+              name: 'additionalContext',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .generateDraft(
+            session,
+            params['emailId'],
+            tone: params['tone'],
+            additionalContext: params['additionalContext'],
+          ),
+        ),
+        'createGmailDraft': _i1.MethodConnector(
+          name: 'createGmailDraft',
+          params: {
+            'emailId': _i1.ParameterDescription(
+              name: 'emailId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'replyText': _i1.ParameterDescription(
+              name: 'replyText',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .createGmailDraft(
+            session,
+            params['emailId'],
+            params['replyText'],
+          ),
+        ),
+        'syncEmails': _i1.MethodConnector(
+          name: 'syncEmails',
+          params: {
+            'fullSync': _i1.ParameterDescription(
+              name: 'fullSync',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint).syncEmails(
+            session,
+            fullSync: params['fullSync'],
+          ),
+        ),
+        'getDailyDigest': _i1.MethodConnector(
+          name: 'getDailyDigest',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getDailyDigest(session),
+        ),
+        'getUpcomingEvents': _i1.MethodConnector(
+          name: 'getUpcomingEvents',
+          params: {
+            'hoursAhead': _i1.ParameterDescription(
+              name: 'hoursAhead',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getUpcomingEvents(
+            session,
+            hoursAhead: params['hoursAhead'],
+            limit: params['limit'],
+          ),
+        ),
+        'getTodayEvents': _i1.MethodConnector(
+          name: 'getTodayEvents',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getTodayEvents(session),
+        ),
+        'getEventsByRange': _i1.MethodConnector(
+          name: 'getEventsByRange',
+          params: {
+            'startDate': _i1.ParameterDescription(
+              name: 'startDate',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'endDate': _i1.ParameterDescription(
+              name: 'endDate',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getEventsByRange(
+            session,
+            params['startDate'],
+            params['endDate'],
+          ),
+        ),
+        'getEvent': _i1.MethodConnector(
+          name: 'getEvent',
+          params: {
+            'eventId': _i1.ParameterDescription(
+              name: 'eventId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint).getEvent(
+            session,
+            params['eventId'],
+          ),
+        ),
+        'generateMeetingPrep': _i1.MethodConnector(
+          name: 'generateMeetingPrep',
+          params: {
+            'eventId': _i1.ParameterDescription(
+              name: 'eventId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .generateMeetingPrep(
+            session,
+            params['eventId'],
+          ),
+        ),
+        'syncCalendar': _i1.MethodConnector(
+          name: 'syncCalendar',
+          params: {
+            'daysAhead': _i1.ParameterDescription(
+              name: 'daysAhead',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .syncCalendar(
+            session,
+            daysAhead: params['daysAhead'],
+          ),
+        ),
+        'getDashboard': _i1.MethodConnector(
+          name: 'getDashboard',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .getDashboard(session),
         ),
       },
     );
@@ -814,7 +1235,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i11.SearchRequest>(),
+              type: _i1.getType<_i13.SearchRequest>(),
               nullable: false,
             )
           },
@@ -822,7 +1243,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i7.SearchEndpoint).search(
+              (endpoints['search'] as _i9.SearchEndpoint).search(
             session,
             params['request'],
           ),
@@ -840,7 +1261,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i7.SearchEndpoint).quickSearch(
+              (endpoints['search'] as _i9.SearchEndpoint).quickSearch(
             session,
             params['query'],
           ),
@@ -852,7 +1273,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i7.SearchEndpoint)
+              (endpoints['search'] as _i9.SearchEndpoint)
                   .getRecentSearches(session),
         ),
         'recordSearchClick': _i1.MethodConnector(
@@ -873,7 +1294,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i7.SearchEndpoint).recordSearchClick(
+              (endpoints['search'] as _i9.SearchEndpoint).recordSearchClick(
             session,
             params['searchQueryId'],
             params['captureId'],
@@ -892,7 +1313,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i8.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
                   .getPreferences(session),
         ),
         'updatePreferences': _i1.MethodConnector(
@@ -933,7 +1354,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i8.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
                   .updatePreferences(
             session,
             timezone: params['timezone'],
@@ -951,7 +1372,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i8.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
                   .toggleOverlay(session),
         ),
       },
@@ -973,7 +1394,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['greeting'] as _i9.GreetingEndpoint).hello(
+              (endpoints['greeting'] as _i11.GreetingEndpoint).hello(
             session,
             params['name'],
           ),

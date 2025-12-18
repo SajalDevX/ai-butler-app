@@ -1,0 +1,12 @@
+### Dashboard data for Google integrations
+class: IntegrationDashboard
+fields:
+  unreadEmailCount: int
+  actionableEmailCount: int
+  importantEmails: List<EmailSummary>
+  todayEvents: List<CalendarEventCache>
+  upcomingMeetings: List<CalendarEventCache>
+  gmailEnabled: bool
+  calendarEnabled: bool
+  lastGmailSync: DateTime?
+  lastCalendarSync: DateTime?

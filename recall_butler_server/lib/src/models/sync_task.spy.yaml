@@ -1,0 +1,5 @@
+### Simple model for sync task future calls
+class: SyncTask
+fields:
+  taskType: String?
+  userId: int?

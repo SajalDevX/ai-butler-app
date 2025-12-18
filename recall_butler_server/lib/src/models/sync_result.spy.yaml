@@ -1,0 +1,7 @@
+### Result of sync operation (Gmail or Calendar)
+class: SyncResult
+fields:
+  success: bool
+  error: String?
+  newCount: int
+  updatedCount: int

@@ -14,37 +14,60 @@ import 'package:serverpod/protocol.dart' as _i2;
 import 'greeting.dart' as _i3;
 import 'action.dart' as _i4;
 import 'ai_processing_result.dart' as _i5;
-import 'capture.dart' as _i6;
-import 'capture_collection.dart' as _i7;
-import 'capture_request.dart' as _i8;
-import 'collection.dart' as _i9;
-import 'dashboard_stats.dart' as _i10;
-import 'morning_briefing.dart' as _i11;
-import 'quick_analysis_result.dart' as _i12;
-import 'reminder.dart' as _i13;
-import 'search_query.dart' as _i14;
-import 'search_request.dart' as _i15;
-import 'search_result.dart' as _i16;
-import 'token_usage_history.dart' as _i17;
-import 'user_preference.dart' as _i18;
-import 'weekly_digest.dart' as _i19;
-import 'package:recall_butler_server/src/generated/action.dart' as _i20;
-import 'package:recall_butler_server/src/generated/capture.dart' as _i21;
-import 'package:recall_butler_server/src/generated/collection.dart' as _i22;
+import 'calendar_event_cache.dart' as _i6;
+import 'capture.dart' as _i7;
+import 'capture_collection.dart' as _i8;
+import 'capture_request.dart' as _i9;
+import 'collection.dart' as _i10;
+import 'dashboard_stats.dart' as _i11;
+import 'email_draft_result.dart' as _i12;
+import 'email_summary.dart' as _i13;
+import 'google_auth_result.dart' as _i14;
+import 'google_auth_status.dart' as _i15;
+import 'google_token.dart' as _i16;
+import 'integration_dashboard.dart' as _i17;
+import 'meeting_prep_result.dart' as _i18;
+import 'morning_briefing.dart' as _i19;
+import 'quick_analysis_result.dart' as _i20;
+import 'reminder.dart' as _i21;
+import 'search_query.dart' as _i22;
+import 'search_request.dart' as _i23;
+import 'search_result.dart' as _i24;
+import 'sync_result.dart' as _i25;
+import 'sync_task.dart' as _i26;
+import 'token_usage_history.dart' as _i27;
+import 'user_preference.dart' as _i28;
+import 'weekly_digest.dart' as _i29;
+import 'package:recall_butler_server/src/generated/action.dart' as _i30;
+import 'package:recall_butler_server/src/generated/capture.dart' as _i31;
+import 'package:recall_butler_server/src/generated/collection.dart' as _i32;
+import 'package:recall_butler_server/src/generated/email_summary.dart' as _i33;
+import 'package:recall_butler_server/src/generated/calendar_event_cache.dart'
+    as _i34;
 export 'greeting.dart';
 export 'action.dart';
 export 'ai_processing_result.dart';
+export 'calendar_event_cache.dart';
 export 'capture.dart';
 export 'capture_collection.dart';
 export 'capture_request.dart';
 export 'collection.dart';
 export 'dashboard_stats.dart';
+export 'email_draft_result.dart';
+export 'email_summary.dart';
+export 'google_auth_result.dart';
+export 'google_auth_status.dart';
+export 'google_token.dart';
+export 'integration_dashboard.dart';
+export 'meeting_prep_result.dart';
 export 'morning_briefing.dart';
 export 'quick_analysis_result.dart';
 export 'reminder.dart';
 export 'search_query.dart';
 export 'search_request.dart';
 export 'search_result.dart';
+export 'sync_result.dart';
+export 'sync_task.dart';
 export 'token_usage_history.dart';
 export 'user_preference.dart';
 export 'weekly_digest.dart';
@@ -211,6 +234,270 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'reminderAt',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'calendar_event_cache',
+      dartName: 'CalendarEventCache',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'calendar_event_cache_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'googleEventId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'calendarId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'title',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'description',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'location',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'startTime',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'endTime',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isAllDay',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isRecurring',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'recurringEventId',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'recurrenceRule',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'organizerEmail',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'attendeesJson',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'attendeeCount',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'meetingLink',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'conferenceType',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'aiSummary',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'suggestedPrep',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'relatedEmailIds',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'relatedCaptureIds',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'contextBrief',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'eventStatus',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'responseStatus',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'reminderMinutes',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'hasCustomReminder',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'etag',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastSyncedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'calendar_event_cache_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'calendar_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'calendar_google_event_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'googleEventId',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'calendar_start_time_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'startTime',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'calendar_calendar_id_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'calendarId',
             )
           ],
           type: 'btree',
@@ -571,6 +858,420 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'email_summaries',
+      dartName: 'EmailSummary',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'email_summaries_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'gmailId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'threadId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'subject',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fromEmail',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fromName',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'toEmails',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'ccEmails',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'receivedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'snippet',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'bodyText',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'hasAttachments',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'attachmentNames',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'aiSummary',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'importanceScore',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'importanceReason',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'category',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sentiment',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'requiresAction',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'suggestedActions',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deadlineDetected',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'draftReply',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'draftTone',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isRead',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isArchived',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isProcessed',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'processingError',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'email_summaries_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_gmail_id_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'gmailId',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_thread_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'threadId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_importance_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'importanceScore',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_received_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'receivedAt',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'email_requires_action_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'requiresAction',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'google_tokens',
+      dartName: 'GoogleToken',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'google_tokens_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'accessToken',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'refreshToken',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'expiresAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'scope',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'gmailEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'calendarEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastGmailSync',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastCalendarSync',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'gmailHistoryId',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'google_tokens_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'google_token_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'google_token_expires_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'expiresAt',
             )
           ],
           type: 'btree',
@@ -1009,47 +1710,77 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i5.AIProcessingResult) {
       return _i5.AIProcessingResult.fromJson(data) as T;
     }
-    if (t == _i6.Capture) {
-      return _i6.Capture.fromJson(data) as T;
+    if (t == _i6.CalendarEventCache) {
+      return _i6.CalendarEventCache.fromJson(data) as T;
     }
-    if (t == _i7.CaptureCollection) {
-      return _i7.CaptureCollection.fromJson(data) as T;
+    if (t == _i7.Capture) {
+      return _i7.Capture.fromJson(data) as T;
     }
-    if (t == _i8.CaptureRequest) {
-      return _i8.CaptureRequest.fromJson(data) as T;
+    if (t == _i8.CaptureCollection) {
+      return _i8.CaptureCollection.fromJson(data) as T;
     }
-    if (t == _i9.Collection) {
-      return _i9.Collection.fromJson(data) as T;
+    if (t == _i9.CaptureRequest) {
+      return _i9.CaptureRequest.fromJson(data) as T;
     }
-    if (t == _i10.DashboardStats) {
-      return _i10.DashboardStats.fromJson(data) as T;
+    if (t == _i10.Collection) {
+      return _i10.Collection.fromJson(data) as T;
     }
-    if (t == _i11.MorningBriefing) {
-      return _i11.MorningBriefing.fromJson(data) as T;
+    if (t == _i11.DashboardStats) {
+      return _i11.DashboardStats.fromJson(data) as T;
     }
-    if (t == _i12.QuickAnalysisResult) {
-      return _i12.QuickAnalysisResult.fromJson(data) as T;
+    if (t == _i12.EmailDraftResult) {
+      return _i12.EmailDraftResult.fromJson(data) as T;
     }
-    if (t == _i13.Reminder) {
-      return _i13.Reminder.fromJson(data) as T;
+    if (t == _i13.EmailSummary) {
+      return _i13.EmailSummary.fromJson(data) as T;
     }
-    if (t == _i14.SearchQuery) {
-      return _i14.SearchQuery.fromJson(data) as T;
+    if (t == _i14.GoogleAuthResult) {
+      return _i14.GoogleAuthResult.fromJson(data) as T;
     }
-    if (t == _i15.SearchRequest) {
-      return _i15.SearchRequest.fromJson(data) as T;
+    if (t == _i15.GoogleAuthStatus) {
+      return _i15.GoogleAuthStatus.fromJson(data) as T;
     }
-    if (t == _i16.SearchResult) {
-      return _i16.SearchResult.fromJson(data) as T;
+    if (t == _i16.GoogleToken) {
+      return _i16.GoogleToken.fromJson(data) as T;
     }
-    if (t == _i17.TokenUsageHistory) {
-      return _i17.TokenUsageHistory.fromJson(data) as T;
+    if (t == _i17.IntegrationDashboard) {
+      return _i17.IntegrationDashboard.fromJson(data) as T;
     }
-    if (t == _i18.UserPreference) {
-      return _i18.UserPreference.fromJson(data) as T;
+    if (t == _i18.MeetingPrepResult) {
+      return _i18.MeetingPrepResult.fromJson(data) as T;
     }
-    if (t == _i19.WeeklyDigest) {
-      return _i19.WeeklyDigest.fromJson(data) as T;
+    if (t == _i19.MorningBriefing) {
+      return _i19.MorningBriefing.fromJson(data) as T;
+    }
+    if (t == _i20.QuickAnalysisResult) {
+      return _i20.QuickAnalysisResult.fromJson(data) as T;
+    }
+    if (t == _i21.Reminder) {
+      return _i21.Reminder.fromJson(data) as T;
+    }
+    if (t == _i22.SearchQuery) {
+      return _i22.SearchQuery.fromJson(data) as T;
+    }
+    if (t == _i23.SearchRequest) {
+      return _i23.SearchRequest.fromJson(data) as T;
+    }
+    if (t == _i24.SearchResult) {
+      return _i24.SearchResult.fromJson(data) as T;
+    }
+    if (t == _i25.SyncResult) {
+      return _i25.SyncResult.fromJson(data) as T;
+    }
+    if (t == _i26.SyncTask) {
+      return _i26.SyncTask.fromJson(data) as T;
+    }
+    if (t == _i27.TokenUsageHistory) {
+      return _i27.TokenUsageHistory.fromJson(data) as T;
+    }
+    if (t == _i28.UserPreference) {
+      return _i28.UserPreference.fromJson(data) as T;
+    }
+    if (t == _i29.WeeklyDigest) {
+      return _i29.WeeklyDigest.fromJson(data) as T;
     }
     if (t == _i1.getType<_i3.Greeting?>()) {
       return (data != null ? _i3.Greeting.fromJson(data) : null) as T;
@@ -1060,48 +1791,79 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i5.AIProcessingResult?>()) {
       return (data != null ? _i5.AIProcessingResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i6.Capture?>()) {
-      return (data != null ? _i6.Capture.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i6.CalendarEventCache?>()) {
+      return (data != null ? _i6.CalendarEventCache.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.CaptureCollection?>()) {
-      return (data != null ? _i7.CaptureCollection.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.Capture?>()) {
+      return (data != null ? _i7.Capture.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i8.CaptureRequest?>()) {
-      return (data != null ? _i8.CaptureRequest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i8.CaptureCollection?>()) {
+      return (data != null ? _i8.CaptureCollection.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i9.Collection?>()) {
-      return (data != null ? _i9.Collection.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.CaptureRequest?>()) {
+      return (data != null ? _i9.CaptureRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i10.DashboardStats?>()) {
-      return (data != null ? _i10.DashboardStats.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i10.Collection?>()) {
+      return (data != null ? _i10.Collection.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.MorningBriefing?>()) {
-      return (data != null ? _i11.MorningBriefing.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.DashboardStats?>()) {
+      return (data != null ? _i11.DashboardStats.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.QuickAnalysisResult?>()) {
-      return (data != null ? _i12.QuickAnalysisResult.fromJson(data) : null)
+    if (t == _i1.getType<_i12.EmailDraftResult?>()) {
+      return (data != null ? _i12.EmailDraftResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i13.EmailSummary?>()) {
+      return (data != null ? _i13.EmailSummary.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i14.GoogleAuthResult?>()) {
+      return (data != null ? _i14.GoogleAuthResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i15.GoogleAuthStatus?>()) {
+      return (data != null ? _i15.GoogleAuthStatus.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i16.GoogleToken?>()) {
+      return (data != null ? _i16.GoogleToken.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i17.IntegrationDashboard?>()) {
+      return (data != null ? _i17.IntegrationDashboard.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i13.Reminder?>()) {
-      return (data != null ? _i13.Reminder.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.MeetingPrepResult?>()) {
+      return (data != null ? _i18.MeetingPrepResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.SearchQuery?>()) {
-      return (data != null ? _i14.SearchQuery.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.MorningBriefing?>()) {
+      return (data != null ? _i19.MorningBriefing.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.SearchRequest?>()) {
-      return (data != null ? _i15.SearchRequest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.QuickAnalysisResult?>()) {
+      return (data != null ? _i20.QuickAnalysisResult.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i16.SearchResult?>()) {
-      return (data != null ? _i16.SearchResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i21.Reminder?>()) {
+      return (data != null ? _i21.Reminder.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.TokenUsageHistory?>()) {
-      return (data != null ? _i17.TokenUsageHistory.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.SearchQuery?>()) {
+      return (data != null ? _i22.SearchQuery.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.UserPreference?>()) {
-      return (data != null ? _i18.UserPreference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i23.SearchRequest?>()) {
+      return (data != null ? _i23.SearchRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.WeeklyDigest?>()) {
-      return (data != null ? _i19.WeeklyDigest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.SearchResult?>()) {
+      return (data != null ? _i24.SearchResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i25.SyncResult?>()) {
+      return (data != null ? _i25.SyncResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i26.SyncTask?>()) {
+      return (data != null ? _i26.SyncTask.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i27.TokenUsageHistory?>()) {
+      return (data != null ? _i27.TokenUsageHistory.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i28.UserPreference?>()) {
+      return (data != null ? _i28.UserPreference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i29.WeeklyDigest?>()) {
+      return (data != null ? _i29.WeeklyDigest.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -1111,8 +1873,18 @@ class Protocol extends _i1.SerializationManagerServer {
           ? (data as List).map((e) => deserialize<String>(e)).toList()
           : null) as T;
     }
-    if (t == List<_i6.Capture>) {
-      return (data as List).map((e) => deserialize<_i6.Capture>(e)).toList()
+    if (t == List<_i13.EmailSummary>) {
+      return (data as List)
+          .map((e) => deserialize<_i13.EmailSummary>(e))
+          .toList() as T;
+    }
+    if (t == List<_i6.CalendarEventCache>) {
+      return (data as List)
+          .map((e) => deserialize<_i6.CalendarEventCache>(e))
+          .toList() as T;
+    }
+    if (t == List<_i7.Capture>) {
+      return (data as List).map((e) => deserialize<_i7.Capture>(e)).toList()
           as T;
     }
     if (t == _i1.getType<List<String>?>()) {
@@ -1120,8 +1892,8 @@ class Protocol extends _i1.SerializationManagerServer {
           ? (data as List).map((e) => deserialize<String>(e)).toList()
           : null) as T;
     }
-    if (t == List<_i20.Action>) {
-      return (data as List).map((e) => deserialize<_i20.Action>(e)).toList()
+    if (t == List<_i30.Action>) {
+      return (data as List).map((e) => deserialize<_i30.Action>(e)).toList()
           as T;
     }
     if (t == List<Map<String, dynamic>>) {
@@ -1133,13 +1905,23 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
     }
-    if (t == List<_i21.Capture>) {
-      return (data as List).map((e) => deserialize<_i21.Capture>(e)).toList()
+    if (t == List<_i31.Capture>) {
+      return (data as List).map((e) => deserialize<_i31.Capture>(e)).toList()
           as T;
     }
-    if (t == List<_i22.Collection>) {
-      return (data as List).map((e) => deserialize<_i22.Collection>(e)).toList()
+    if (t == List<_i32.Collection>) {
+      return (data as List).map((e) => deserialize<_i32.Collection>(e)).toList()
           as T;
+    }
+    if (t == List<_i33.EmailSummary>) {
+      return (data as List)
+          .map((e) => deserialize<_i33.EmailSummary>(e))
+          .toList() as T;
+    }
+    if (t == List<_i34.CalendarEventCache>) {
+      return (data as List)
+          .map((e) => deserialize<_i34.CalendarEventCache>(e))
+          .toList() as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -1163,46 +1945,76 @@ class Protocol extends _i1.SerializationManagerServer {
     if (data is _i5.AIProcessingResult) {
       return 'AIProcessingResult';
     }
-    if (data is _i6.Capture) {
+    if (data is _i6.CalendarEventCache) {
+      return 'CalendarEventCache';
+    }
+    if (data is _i7.Capture) {
       return 'Capture';
     }
-    if (data is _i7.CaptureCollection) {
+    if (data is _i8.CaptureCollection) {
       return 'CaptureCollection';
     }
-    if (data is _i8.CaptureRequest) {
+    if (data is _i9.CaptureRequest) {
       return 'CaptureRequest';
     }
-    if (data is _i9.Collection) {
+    if (data is _i10.Collection) {
       return 'Collection';
     }
-    if (data is _i10.DashboardStats) {
+    if (data is _i11.DashboardStats) {
       return 'DashboardStats';
     }
-    if (data is _i11.MorningBriefing) {
+    if (data is _i12.EmailDraftResult) {
+      return 'EmailDraftResult';
+    }
+    if (data is _i13.EmailSummary) {
+      return 'EmailSummary';
+    }
+    if (data is _i14.GoogleAuthResult) {
+      return 'GoogleAuthResult';
+    }
+    if (data is _i15.GoogleAuthStatus) {
+      return 'GoogleAuthStatus';
+    }
+    if (data is _i16.GoogleToken) {
+      return 'GoogleToken';
+    }
+    if (data is _i17.IntegrationDashboard) {
+      return 'IntegrationDashboard';
+    }
+    if (data is _i18.MeetingPrepResult) {
+      return 'MeetingPrepResult';
+    }
+    if (data is _i19.MorningBriefing) {
       return 'MorningBriefing';
     }
-    if (data is _i12.QuickAnalysisResult) {
+    if (data is _i20.QuickAnalysisResult) {
       return 'QuickAnalysisResult';
     }
-    if (data is _i13.Reminder) {
+    if (data is _i21.Reminder) {
       return 'Reminder';
     }
-    if (data is _i14.SearchQuery) {
+    if (data is _i22.SearchQuery) {
       return 'SearchQuery';
     }
-    if (data is _i15.SearchRequest) {
+    if (data is _i23.SearchRequest) {
       return 'SearchRequest';
     }
-    if (data is _i16.SearchResult) {
+    if (data is _i24.SearchResult) {
       return 'SearchResult';
     }
-    if (data is _i17.TokenUsageHistory) {
+    if (data is _i25.SyncResult) {
+      return 'SyncResult';
+    }
+    if (data is _i26.SyncTask) {
+      return 'SyncTask';
+    }
+    if (data is _i27.TokenUsageHistory) {
       return 'TokenUsageHistory';
     }
-    if (data is _i18.UserPreference) {
+    if (data is _i28.UserPreference) {
       return 'UserPreference';
     }
-    if (data is _i19.WeeklyDigest) {
+    if (data is _i29.WeeklyDigest) {
       return 'WeeklyDigest';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1227,47 +2039,77 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'AIProcessingResult') {
       return deserialize<_i5.AIProcessingResult>(data['data']);
     }
+    if (dataClassName == 'CalendarEventCache') {
+      return deserialize<_i6.CalendarEventCache>(data['data']);
+    }
     if (dataClassName == 'Capture') {
-      return deserialize<_i6.Capture>(data['data']);
+      return deserialize<_i7.Capture>(data['data']);
     }
     if (dataClassName == 'CaptureCollection') {
-      return deserialize<_i7.CaptureCollection>(data['data']);
+      return deserialize<_i8.CaptureCollection>(data['data']);
     }
     if (dataClassName == 'CaptureRequest') {
-      return deserialize<_i8.CaptureRequest>(data['data']);
+      return deserialize<_i9.CaptureRequest>(data['data']);
     }
     if (dataClassName == 'Collection') {
-      return deserialize<_i9.Collection>(data['data']);
+      return deserialize<_i10.Collection>(data['data']);
     }
     if (dataClassName == 'DashboardStats') {
-      return deserialize<_i10.DashboardStats>(data['data']);
+      return deserialize<_i11.DashboardStats>(data['data']);
+    }
+    if (dataClassName == 'EmailDraftResult') {
+      return deserialize<_i12.EmailDraftResult>(data['data']);
+    }
+    if (dataClassName == 'EmailSummary') {
+      return deserialize<_i13.EmailSummary>(data['data']);
+    }
+    if (dataClassName == 'GoogleAuthResult') {
+      return deserialize<_i14.GoogleAuthResult>(data['data']);
+    }
+    if (dataClassName == 'GoogleAuthStatus') {
+      return deserialize<_i15.GoogleAuthStatus>(data['data']);
+    }
+    if (dataClassName == 'GoogleToken') {
+      return deserialize<_i16.GoogleToken>(data['data']);
+    }
+    if (dataClassName == 'IntegrationDashboard') {
+      return deserialize<_i17.IntegrationDashboard>(data['data']);
+    }
+    if (dataClassName == 'MeetingPrepResult') {
+      return deserialize<_i18.MeetingPrepResult>(data['data']);
     }
     if (dataClassName == 'MorningBriefing') {
-      return deserialize<_i11.MorningBriefing>(data['data']);
+      return deserialize<_i19.MorningBriefing>(data['data']);
     }
     if (dataClassName == 'QuickAnalysisResult') {
-      return deserialize<_i12.QuickAnalysisResult>(data['data']);
+      return deserialize<_i20.QuickAnalysisResult>(data['data']);
     }
     if (dataClassName == 'Reminder') {
-      return deserialize<_i13.Reminder>(data['data']);
+      return deserialize<_i21.Reminder>(data['data']);
     }
     if (dataClassName == 'SearchQuery') {
-      return deserialize<_i14.SearchQuery>(data['data']);
+      return deserialize<_i22.SearchQuery>(data['data']);
     }
     if (dataClassName == 'SearchRequest') {
-      return deserialize<_i15.SearchRequest>(data['data']);
+      return deserialize<_i23.SearchRequest>(data['data']);
     }
     if (dataClassName == 'SearchResult') {
-      return deserialize<_i16.SearchResult>(data['data']);
+      return deserialize<_i24.SearchResult>(data['data']);
+    }
+    if (dataClassName == 'SyncResult') {
+      return deserialize<_i25.SyncResult>(data['data']);
+    }
+    if (dataClassName == 'SyncTask') {
+      return deserialize<_i26.SyncTask>(data['data']);
     }
     if (dataClassName == 'TokenUsageHistory') {
-      return deserialize<_i17.TokenUsageHistory>(data['data']);
+      return deserialize<_i27.TokenUsageHistory>(data['data']);
     }
     if (dataClassName == 'UserPreference') {
-      return deserialize<_i18.UserPreference>(data['data']);
+      return deserialize<_i28.UserPreference>(data['data']);
     }
     if (dataClassName == 'WeeklyDigest') {
-      return deserialize<_i19.WeeklyDigest>(data['data']);
+      return deserialize<_i29.WeeklyDigest>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1287,20 +2129,26 @@ class Protocol extends _i1.SerializationManagerServer {
     switch (t) {
       case _i4.Action:
         return _i4.Action.t;
-      case _i6.Capture:
-        return _i6.Capture.t;
-      case _i7.CaptureCollection:
-        return _i7.CaptureCollection.t;
-      case _i9.Collection:
-        return _i9.Collection.t;
-      case _i13.Reminder:
-        return _i13.Reminder.t;
-      case _i14.SearchQuery:
-        return _i14.SearchQuery.t;
-      case _i17.TokenUsageHistory:
-        return _i17.TokenUsageHistory.t;
-      case _i18.UserPreference:
-        return _i18.UserPreference.t;
+      case _i6.CalendarEventCache:
+        return _i6.CalendarEventCache.t;
+      case _i7.Capture:
+        return _i7.Capture.t;
+      case _i8.CaptureCollection:
+        return _i8.CaptureCollection.t;
+      case _i10.Collection:
+        return _i10.Collection.t;
+      case _i13.EmailSummary:
+        return _i13.EmailSummary.t;
+      case _i16.GoogleToken:
+        return _i16.GoogleToken.t;
+      case _i21.Reminder:
+        return _i21.Reminder.t;
+      case _i22.SearchQuery:
+        return _i22.SearchQuery.t;
+      case _i27.TokenUsageHistory:
+        return _i27.TokenUsageHistory.t;
+      case _i28.UserPreference:
+        return _i28.UserPreference.t;
     }
     return null;
   }

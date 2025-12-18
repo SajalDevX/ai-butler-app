@@ -1,0 +1,56 @@
+### Calendar Event Cache
+### Caches Google Calendar events with AI enrichment
+class: CalendarEventCache
+table: calendar_event_cache
+fields:
+  userId: int
+  # Google Calendar identifiers
+  googleEventId: String
+  calendarId: String  # primary or specific calendar ID
+  # Event details
+  title: String
+  description: String?
+  location: String?
+  startTime: DateTime
+  endTime: DateTime
+  isAllDay: bool
+  # Recurrence
+  isRecurring: bool
+  recurringEventId: String?
+  recurrenceRule: String?  # RRULE string
+  # Attendees
+  organizerEmail: String?
+  attendeesJson: String?  # JSON array of attendees
+  attendeeCount: int
+  # Meeting links
+  meetingLink: String?  # Zoom, Meet, Teams link
+  conferenceType: String?  # zoom, meet, teams
+  # AI Enrichment
+  aiSummary: String?
+  suggestedPrep: String?  # Preparation suggestions
+  relatedEmailIds: String?  # JSON array of related email IDs
+  relatedCaptureIds: String?  # JSON array of related capture IDs
+  contextBrief: String?  # AI-generated meeting context
+  # Status
+  eventStatus: String  # confirmed, tentative, cancelled
+  responseStatus: String?  # accepted, declined, tentative, needsAction
+  # Reminders
+  reminderMinutes: int?  # Minutes before event
+  hasCustomReminder: bool
+  # Sync metadata
+  etag: String?  # For change detection
+  lastSyncedAt: DateTime
+  # Timestamps
+  createdAt: DateTime
+  updatedAt: DateTime
+
+indexes:
+  calendar_user_idx:
+    fields: userId
+  calendar_google_event_idx:
+    fields: googleEventId
+    unique: true
+  calendar_start_time_idx:
+    fields: startTime
+  calendar_calendar_id_idx:
+    fields: calendarId
