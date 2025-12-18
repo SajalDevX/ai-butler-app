@@ -40,20 +40,7 @@ class CaptureCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    CachedNetworkImage(
-                      imageUrl: capture.thumbnailUrl ?? capture.originalUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.surfaceLight,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.surfaceLight,
-                        child: const Icon(Iconsax.image, size: 40),
-                      ),
-                    ),
+                    _buildImage(),
                     // Type badge
                     Positioned(
                       top: 8,
@@ -218,6 +205,54 @@ class CaptureCard extends StatelessWidget {
   bool get _hasImage =>
       (capture.type == 'screenshot' || capture.type == 'photo') &&
       (capture.thumbnailUrl != null || capture.originalUrl != null);
+
+  /// Check if URL is a data URL (base64 encoded)
+  bool _isDataUrl(String? url) {
+    return url != null && url.startsWith('data:');
+  }
+
+  /// Build image widget - handles both data URLs (local) and network URLs
+  Widget _buildImage() {
+    final imageUrl = capture.thumbnailUrl ?? capture.originalUrl!;
+
+    // Handle data URLs (base64) for optimistic local preview
+    if (_isDataUrl(imageUrl)) {
+      try {
+        // Extract base64 data from data URL
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: AppColors.surfaceLight,
+            child: const Icon(Iconsax.image, size: 40),
+          ),
+        );
+      } catch (e) {
+        return Container(
+          color: AppColors.surfaceLight,
+          child: const Icon(Iconsax.image, size: 40),
+        );
+      }
+    }
+
+    // Handle network URLs
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        color: AppColors.surfaceLight,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: AppColors.surfaceLight,
+        child: const Icon(Iconsax.image, size: 40),
+      ),
+    );
+  }
 
   IconData _getTypeIcon() {
     switch (capture.type) {

@@ -11,15 +11,176 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
-import 'package:recall_butler_client/src/protocol/capture.dart' as _i3;
-import 'package:recall_butler_client/src/protocol/capture_request.dart' as _i4;
-import 'package:recall_butler_client/src/protocol/collection.dart' as _i5;
-import 'package:recall_butler_client/src/protocol/weekly_digest.dart' as _i6;
-import 'package:recall_butler_client/src/protocol/search_result.dart' as _i7;
-import 'package:recall_butler_client/src/protocol/search_request.dart' as _i8;
-import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i9;
-import 'package:recall_butler_client/src/protocol/greeting.dart' as _i10;
-import 'protocol.dart' as _i11;
+import 'package:recall_butler_client/src/protocol/action.dart' as _i3;
+import 'package:recall_butler_client/src/protocol/capture.dart' as _i4;
+import 'package:recall_butler_client/src/protocol/capture_request.dart' as _i5;
+import 'package:recall_butler_client/src/protocol/collection.dart' as _i6;
+import 'package:recall_butler_client/src/protocol/dashboard_stats.dart' as _i7;
+import 'package:recall_butler_client/src/protocol/morning_briefing.dart' as _i8;
+import 'package:recall_butler_client/src/protocol/weekly_digest.dart' as _i9;
+import 'package:recall_butler_client/src/protocol/search_result.dart' as _i10;
+import 'package:recall_butler_client/src/protocol/search_request.dart' as _i11;
+import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i12;
+import 'package:recall_butler_client/src/protocol/greeting.dart' as _i13;
+import 'protocol.dart' as _i14;
+
+/// {@category Endpoint}
+class EndpointAction extends _i1.EndpointRef {
+  EndpointAction(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'action';
+
+  /// Create a new action
+  _i2.Future<_i3.Action> createAction(
+    String type,
+    String title, {
+    String? notes,
+    DateTime? dueAt,
+    String? priority,
+    int? captureId,
+  }) =>
+      caller.callServerEndpoint<_i3.Action>(
+        'action',
+        'createAction',
+        {
+          'type': type,
+          'title': title,
+          'notes': notes,
+          'dueAt': dueAt,
+          'priority': priority,
+          'captureId': captureId,
+        },
+      );
+
+  /// Create multiple actions from AI extraction (used when processing captures)
+  _i2.Future<List<_i3.Action>> createActionsFromCapture(
+    int captureId,
+    List<Map<String, dynamic>> actionItems,
+  ) =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'createActionsFromCapture',
+        {
+          'captureId': captureId,
+          'actionItems': actionItems,
+        },
+      );
+
+  /// Get all actions for the current user
+  _i2.Future<List<_i3.Action>> getActions({
+    int? limit,
+    int? offset,
+    String? type,
+    bool? isCompleted,
+    bool? dueSoon,
+  }) =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'getActions',
+        {
+          'limit': limit,
+          'offset': offset,
+          'type': type,
+          'isCompleted': isCompleted,
+          'dueSoon': dueSoon,
+        },
+      );
+
+  /// Get pending actions (not completed)
+  _i2.Future<List<_i3.Action>> getPendingActions() =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'getPendingActions',
+        {},
+      );
+
+  /// Get actions due today
+  _i2.Future<List<_i3.Action>> getTodayActions() =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'getTodayActions',
+        {},
+      );
+
+  /// Get overdue actions
+  _i2.Future<List<_i3.Action>> getOverdueActions() =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'getOverdueActions',
+        {},
+      );
+
+  /// Get a single action by ID
+  _i2.Future<_i3.Action?> getAction(int actionId) =>
+      caller.callServerEndpoint<_i3.Action?>(
+        'action',
+        'getAction',
+        {'actionId': actionId},
+      );
+
+  /// Update an action
+  _i2.Future<_i3.Action?> updateAction(
+    int actionId, {
+    String? title,
+    String? notes,
+    DateTime? dueAt,
+    String? priority,
+    String? type,
+  }) =>
+      caller.callServerEndpoint<_i3.Action?>(
+        'action',
+        'updateAction',
+        {
+          'actionId': actionId,
+          'title': title,
+          'notes': notes,
+          'dueAt': dueAt,
+          'priority': priority,
+          'type': type,
+        },
+      );
+
+  /// Mark an action as completed
+  _i2.Future<_i3.Action?> completeAction(int actionId) =>
+      caller.callServerEndpoint<_i3.Action?>(
+        'action',
+        'completeAction',
+        {'actionId': actionId},
+      );
+
+  /// Mark an action as not completed (undo)
+  _i2.Future<_i3.Action?> uncompleteAction(int actionId) =>
+      caller.callServerEndpoint<_i3.Action?>(
+        'action',
+        'uncompleteAction',
+        {'actionId': actionId},
+      );
+
+  /// Delete an action
+  _i2.Future<bool> deleteAction(int actionId) =>
+      caller.callServerEndpoint<bool>(
+        'action',
+        'deleteAction',
+        {'actionId': actionId},
+      );
+
+  /// Get action statistics for dashboard
+  _i2.Future<Map<String, dynamic>> getActionStats() =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'action',
+        'getActionStats',
+        {},
+      );
+
+  /// Get actions for a specific capture
+  _i2.Future<List<_i3.Action>> getActionsForCapture(int captureId) =>
+      caller.callServerEndpoint<List<_i3.Action>>(
+        'action',
+        'getActionsForCapture',
+        {'captureId': captureId},
+      );
+}
 
 /// {@category Endpoint}
 class EndpointCapture extends _i1.EndpointRef {
@@ -29,21 +190,24 @@ class EndpointCapture extends _i1.EndpointRef {
   String get name => 'capture';
 
   /// Creates a new capture from uploaded content
-  _i2.Future<_i3.Capture> createCapture(_i4.CaptureRequest request) =>
-      caller.callServerEndpoint<_i3.Capture>(
+  /// Uses two-phase processing:
+  /// - Phase 1 (Sync): Quick AI analysis, returns in <2 seconds
+  /// - Phase 2 (Async): Deep analysis runs in background
+  _i2.Future<_i4.Capture> createCapture(_i5.CaptureRequest request) =>
+      caller.callServerEndpoint<_i4.Capture>(
         'capture',
         'createCapture',
         {'request': request},
       );
 
   /// Get all captures for the current user
-  _i2.Future<List<_i3.Capture>> getCaptures({
+  _i2.Future<List<_i4.Capture>> getCaptures({
     int? limit,
     int? offset,
     String? category,
     String? type,
   }) =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'capture',
         'getCaptures',
         {
@@ -55,8 +219,8 @@ class EndpointCapture extends _i1.EndpointRef {
       );
 
   /// Get a single capture by ID
-  _i2.Future<_i3.Capture?> getCapture(int captureId) =>
-      caller.callServerEndpoint<_i3.Capture?>(
+  _i2.Future<_i4.Capture?> getCapture(int captureId) =>
+      caller.callServerEndpoint<_i4.Capture?>(
         'capture',
         'getCapture',
         {'captureId': captureId},
@@ -71,11 +235,11 @@ class EndpointCapture extends _i1.EndpointRef {
       );
 
   /// Get captures by date range (for timeline view)
-  _i2.Future<List<_i3.Capture>> getCapturesByDateRange(
+  _i2.Future<List<_i4.Capture>> getCapturesByDateRange(
     DateTime startDate,
     DateTime endDate,
   ) =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'capture',
         'getCapturesByDateRange',
         {
@@ -85,11 +249,11 @@ class EndpointCapture extends _i1.EndpointRef {
       );
 
   /// Update capture category
-  _i2.Future<_i3.Capture?> updateCategory(
+  _i2.Future<_i4.Capture?> updateCategory(
     int captureId,
     String category,
   ) =>
-      caller.callServerEndpoint<_i3.Capture?>(
+      caller.callServerEndpoint<_i4.Capture?>(
         'capture',
         'updateCategory',
         {
@@ -99,8 +263,8 @@ class EndpointCapture extends _i1.EndpointRef {
       );
 
   /// Get captures marked as reminders
-  _i2.Future<List<_i3.Capture>> getReminders() =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+  _i2.Future<List<_i4.Capture>> getReminders() =>
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'capture',
         'getReminders',
         {},
@@ -115,11 +279,11 @@ class EndpointCollection extends _i1.EndpointRef {
   String get name => 'collection';
 
   /// Create a new collection
-  _i2.Future<_i5.Collection> createCollection(
+  _i2.Future<_i6.Collection> createCollection(
     String name, {
     String? description,
   }) =>
-      caller.callServerEndpoint<_i5.Collection>(
+      caller.callServerEndpoint<_i6.Collection>(
         'collection',
         'createCollection',
         {
@@ -129,24 +293,24 @@ class EndpointCollection extends _i1.EndpointRef {
       );
 
   /// Get all collections for the user
-  _i2.Future<List<_i5.Collection>> getCollections() =>
-      caller.callServerEndpoint<List<_i5.Collection>>(
+  _i2.Future<List<_i6.Collection>> getCollections() =>
+      caller.callServerEndpoint<List<_i6.Collection>>(
         'collection',
         'getCollections',
         {},
       );
 
   /// Get a single collection with its captures
-  _i2.Future<_i5.Collection?> getCollection(int collectionId) =>
-      caller.callServerEndpoint<_i5.Collection?>(
+  _i2.Future<_i6.Collection?> getCollection(int collectionId) =>
+      caller.callServerEndpoint<_i6.Collection?>(
         'collection',
         'getCollection',
         {'collectionId': collectionId},
       );
 
   /// Get captures in a collection
-  _i2.Future<List<_i3.Capture>> getCollectionCaptures(int collectionId) =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+  _i2.Future<List<_i4.Capture>> getCollectionCaptures(int collectionId) =>
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'collection',
         'getCollectionCaptures',
         {'collectionId': collectionId},
@@ -181,12 +345,12 @@ class EndpointCollection extends _i1.EndpointRef {
       );
 
   /// Update collection details
-  _i2.Future<_i5.Collection?> updateCollection(
+  _i2.Future<_i6.Collection?> updateCollection(
     int collectionId, {
     String? name,
     String? description,
   }) =>
-      caller.callServerEndpoint<_i5.Collection?>(
+      caller.callServerEndpoint<_i6.Collection?>(
         'collection',
         'updateCollection',
         {
@@ -206,6 +370,30 @@ class EndpointCollection extends _i1.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointDashboard extends _i1.EndpointRef {
+  EndpointDashboard(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'dashboard';
+
+  /// Get comprehensive dashboard statistics
+  _i2.Future<_i7.DashboardStats> getDashboardStats() =>
+      caller.callServerEndpoint<_i7.DashboardStats>(
+        'dashboard',
+        'getDashboardStats',
+        {},
+      );
+
+  /// Get morning briefing content
+  _i2.Future<_i8.MorningBriefing> getMorningBriefing() =>
+      caller.callServerEndpoint<_i8.MorningBriefing>(
+        'dashboard',
+        'getMorningBriefing',
+        {},
+      );
+}
+
+/// {@category Endpoint}
 class EndpointInsight extends _i1.EndpointRef {
   EndpointInsight(_i1.EndpointCaller caller) : super(caller);
 
@@ -213,24 +401,24 @@ class EndpointInsight extends _i1.EndpointRef {
   String get name => 'insight';
 
   /// Get proactive insights for the user
-  _i2.Future<List<_i3.Capture>> getProactiveInsights() =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+  _i2.Future<List<_i4.Capture>> getProactiveInsights() =>
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'insight',
         'getProactiveInsights',
         {},
       );
 
   /// Get related captures for a given capture
-  _i2.Future<List<_i3.Capture>> getRelatedCaptures(int captureId) =>
-      caller.callServerEndpoint<List<_i3.Capture>>(
+  _i2.Future<List<_i4.Capture>> getRelatedCaptures(int captureId) =>
+      caller.callServerEndpoint<List<_i4.Capture>>(
         'insight',
         'getRelatedCaptures',
         {'captureId': captureId},
       );
 
   /// Generate weekly digest
-  _i2.Future<_i6.WeeklyDigest> getWeeklyDigest() =>
-      caller.callServerEndpoint<_i6.WeeklyDigest>(
+  _i2.Future<_i9.WeeklyDigest> getWeeklyDigest() =>
+      caller.callServerEndpoint<_i9.WeeklyDigest>(
         'insight',
         'getWeeklyDigest',
         {},
@@ -261,8 +449,8 @@ class EndpointSearch extends _i1.EndpointRef {
   String get name => 'search';
 
   /// Perform semantic search across captures
-  _i2.Future<_i7.SearchResult> search(_i8.SearchRequest request) =>
-      caller.callServerEndpoint<_i7.SearchResult>(
+  _i2.Future<_i10.SearchResult> search(_i11.SearchRequest request) =>
+      caller.callServerEndpoint<_i10.SearchResult>(
         'search',
         'search',
         {'request': request},
@@ -307,15 +495,15 @@ class EndpointUserPreference extends _i1.EndpointRef {
   String get name => 'userPreference';
 
   /// Get user preferences, creating default if not exists
-  _i2.Future<_i9.UserPreference> getPreferences() =>
-      caller.callServerEndpoint<_i9.UserPreference>(
+  _i2.Future<_i12.UserPreference> getPreferences() =>
+      caller.callServerEndpoint<_i12.UserPreference>(
         'userPreference',
         'getPreferences',
         {},
       );
 
   /// Update user preferences
-  _i2.Future<_i9.UserPreference> updatePreferences({
+  _i2.Future<_i12.UserPreference> updatePreferences({
     String? timezone,
     String? notificationTime,
     bool? overlayEnabled,
@@ -323,7 +511,7 @@ class EndpointUserPreference extends _i1.EndpointRef {
     bool? proactiveRemindersEnabled,
     String? theme,
   }) =>
-      caller.callServerEndpoint<_i9.UserPreference>(
+      caller.callServerEndpoint<_i12.UserPreference>(
         'userPreference',
         'updatePreferences',
         {
@@ -354,8 +542,8 @@ class EndpointGreeting extends _i1.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i2.Future<_i10.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i10.Greeting>(
+  _i2.Future<_i13.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i13.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -378,7 +566,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
           host,
-          _i11.Protocol(),
+          _i14.Protocol(),
           securityContext: securityContext,
           authenticationKeyManager: authenticationKeyManager,
           streamingConnectionTimeout: streamingConnectionTimeout,
@@ -388,17 +576,23 @@ class Client extends _i1.ServerpodClientShared {
           disconnectStreamsOnLostInternetConnection:
               disconnectStreamsOnLostInternetConnection,
         ) {
+    action = EndpointAction(this);
     capture = EndpointCapture(this);
     collection = EndpointCollection(this);
+    dashboard = EndpointDashboard(this);
     insight = EndpointInsight(this);
     search = EndpointSearch(this);
     userPreference = EndpointUserPreference(this);
     greeting = EndpointGreeting(this);
   }
 
+  late final EndpointAction action;
+
   late final EndpointCapture capture;
 
   late final EndpointCollection collection;
+
+  late final EndpointDashboard dashboard;
 
   late final EndpointInsight insight;
 
@@ -410,8 +604,10 @@ class Client extends _i1.ServerpodClientShared {
 
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
+        'action': action,
         'capture': capture,
         'collection': collection,
+        'dashboard': dashboard,
         'insight': insight,
         'search': search,
         'userPreference': userPreference,

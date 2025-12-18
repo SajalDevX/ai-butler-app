@@ -11,7 +11,12 @@ fields:
   originalUrl: String?
   ### Compressed thumbnail URL
   thumbnailUrl: String?
-  ### AI-extracted text content from the capture
+
+  ### Quick analysis (populated immediately in sync phase)
+  quickDescription: String?
+  quickType: String?
+
+  ### Full analysis (populated by background worker)
   extractedText: String?
   ### AI-generated description/summary
   aiSummary: String?
@@ -25,8 +30,14 @@ fields:
   isReminder: bool
   ### Source app or URL where content was captured from
   sourceApp: String?
-  ### Processing status: pending, processing, completed, failed
+  ### Processing status: pending, analyzing, processing, completed, failed
   processingStatus: String
+  ### Processing progress 0-100
+  processingProgress: int?
+  ### When full processing completed
+  processedAt: DateTime?
+  ### Error message if failed
+  errorMessage: String?
 
 indexes:
   capture_user_idx:
@@ -35,3 +46,5 @@ indexes:
     fields: createdAt
   capture_category_idx:
     fields: category
+  capture_status_idx:
+    fields: processingStatus

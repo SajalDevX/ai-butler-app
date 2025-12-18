@@ -9,6 +9,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'src/app.dart';
 import 'src/providers/client_provider.dart';
 import 'src/services/api_logger.dart';
+import 'src/services/notification_service.dart';
 
 /// Global Serverpod client instance
 late final Client client;
@@ -34,6 +35,10 @@ Future<void> main() async {
 
   // Configure timeago for relative timestamps
   timeago.setLocaleMessages('en', timeago.EnMessages());
+
+  // Initialize notification service
+  await NotificationService().initialize();
+  await NotificationService().requestPermissions();
 
   // Initialize the Serverpod client
   // For physical devices: Update this IP to your computer's local IP

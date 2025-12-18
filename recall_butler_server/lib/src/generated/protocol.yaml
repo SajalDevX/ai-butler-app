@@ -1,3 +1,17 @@
+action:
+  - createAction:
+  - createActionsFromCapture:
+  - getActions:
+  - getPendingActions:
+  - getTodayActions:
+  - getOverdueActions:
+  - getAction:
+  - updateAction:
+  - completeAction:
+  - uncompleteAction:
+  - deleteAction:
+  - getActionStats:
+  - getActionsForCapture:
 capture:
   - createCapture:
   - getCaptures:
@@ -15,6 +29,9 @@ collection:
   - removeCaptureFromCollection:
   - updateCollection:
   - deleteCollection:
+dashboard:
+  - getDashboardStats:
+  - getMorningBriefing:
 insight:
   - getProactiveInsights:
   - getRelatedCaptures:

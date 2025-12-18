@@ -1,0 +1,39 @@
+### Action - AI-extracted tasks, reminders, and events from captures
+class: Action
+table: action
+
+fields:
+  ### Foreign key to user
+  userId: int
+  ### Foreign key to source capture (optional - actions can be standalone)
+  captureId: int?
+  ### Type: task, reminder, event, shopping, birthday, anniversary, deadline, appointment
+  type: String
+  ### Action title/description
+  title: String
+  ### Detailed notes (optional)
+  notes: String?
+  ### Due date/time - when the event occurs
+  dueAt: DateTime?
+  ### Reminder date/time - when to remind the user (calculated from dueAt - reminderDaysBefore)
+  reminderAt: DateTime?
+  ### Whether the action is completed
+  isCompleted: bool
+  ### Priority: low, medium, high (AI-determined based on event importance)
+  priority: String
+  ### Creation timestamp
+  createdAt: DateTime
+  ### Completion timestamp (optional)
+  completedAt: DateTime?
+
+indexes:
+  action_user_idx:
+    fields: userId
+  action_capture_idx:
+    fields: captureId
+  action_due_idx:
+    fields: dueAt
+  action_completed_idx:
+    fields: isCompleted
+  action_reminder_idx:
+    fields: reminderAt

@@ -7,7 +7,11 @@ class FileStorageService {
   static const String _storagePath = 'public';
   static const int _thumbnailSize = 300;
 
+  /// Result of file upload containing URLs and thumbnail bytes
+  static Uint8List? lastThumbnailBytes;
+
   /// Upload a capture file and return URLs for original and thumbnail
+  /// Also stores thumbnail bytes in lastThumbnailBytes for immediate AI processing
   static Future<Map<String, String>> uploadCaptureFile(
     Session session,
     int captureId,
@@ -16,6 +20,7 @@ class FileStorageService {
   ) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final extension = _getExtension(type);
+    lastThumbnailBytes = null;
 
     // Upload original file
     final originalPath = 'captures/$captureId/original_$timestamp$extension';
@@ -38,6 +43,9 @@ class FileStorageService {
       try {
         final thumbnail = await _createThumbnail(bytes);
         if (thumbnail != null) {
+          // Store for immediate use by AI processing
+          lastThumbnailBytes = thumbnail;
+
           final thumbPath = 'captures/$captureId/thumb_$timestamp.jpg';
           await session.storage.storeFile(
             storageId: _storagePath,

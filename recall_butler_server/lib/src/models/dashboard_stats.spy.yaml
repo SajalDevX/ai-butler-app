@@ -1,0 +1,23 @@
+### DashboardStats - Statistics for the smart dashboard
+class: DashboardStats
+fields:
+  ### Total captures this week
+  weeklyCaptures: int
+  ### Total captures all time
+  totalCaptures: int
+  ### Pending actions count
+  pendingActions: int
+  ### Completed actions this week
+  completedActionsThisWeek: int
+  ### Captures by category (JSON map)
+  capturesByCategory: String
+  ### Captures by type (JSON map)
+  capturesByType: String
+  ### Top tags this week (JSON array)
+  topTags: String
+  ### Butler suggestions (JSON array of suggestion objects)
+  suggestions: String
+  ### Daily capture counts for the week (JSON array)
+  dailyCounts: String
+  ### Current streak (consecutive days with captures)
+  captureStreak: int

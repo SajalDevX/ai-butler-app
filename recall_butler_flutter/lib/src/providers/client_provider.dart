@@ -4,8 +4,10 @@ import 'package:serverpod_flutter/serverpod_flutter.dart';
 
 /// Provider for the Serverpod client
 final clientProvider = Provider<Client>((ref) {
-  return Client('http://localhost:8080/')
-    ..connectivityMonitor = FlutterConnectivityMonitor();
+  return Client(
+    'http://localhost:8080/',
+    connectionTimeout: const Duration(seconds: 120), // Extended for AI processing
+  )..connectivityMonitor = FlutterConnectivityMonitor();
 });
 
 /// Provider for connection state
