@@ -1,0 +1,24 @@
+### Device Token Storage for Push Notifications
+### Stores FCM tokens for sending push notifications to user devices
+class: DeviceToken
+table: device_tokens
+fields:
+  userId: int
+  # FCM token from Firebase Cloud Messaging
+  fcmToken: String
+  # Device info for debugging
+  deviceType: String  # 'android' or 'ios'
+  deviceName: String?
+  # Token status
+  isActive: bool
+  lastUsedAt: DateTime?
+  # Timestamps
+  createdAt: DateTime
+  updatedAt: DateTime
+
+indexes:
+  device_token_user_idx:
+    fields: userId
+  device_token_fcm_idx:
+    fields: fcmToken
+    unique: true

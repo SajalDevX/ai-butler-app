@@ -32,11 +32,13 @@ import 'package:recall_butler_client/src/protocol/meeting_prep_result.dart'
     as _i16;
 import 'package:recall_butler_client/src/protocol/integration_dashboard.dart'
     as _i17;
-import 'package:recall_butler_client/src/protocol/search_result.dart' as _i18;
-import 'package:recall_butler_client/src/protocol/search_request.dart' as _i19;
-import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i20;
-import 'package:recall_butler_client/src/protocol/greeting.dart' as _i21;
-import 'protocol.dart' as _i22;
+import 'package:recall_butler_client/src/protocol/notification_log.dart'
+    as _i18;
+import 'package:recall_butler_client/src/protocol/search_result.dart' as _i19;
+import 'package:recall_butler_client/src/protocol/search_request.dart' as _i20;
+import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i21;
+import 'package:recall_butler_client/src/protocol/greeting.dart' as _i22;
+import 'protocol.dart' as _i23;
 
 /// {@category Endpoint}
 class EndpointAction extends _i1.EndpointRef {
@@ -681,6 +683,78 @@ class EndpointIntegration extends _i1.EndpointRef {
       );
 }
 
+/// Endpoint for managing push notifications and device tokens
+/// {@category Endpoint}
+class EndpointNotification extends _i1.EndpointRef {
+  EndpointNotification(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notification';
+
+  /// Register a device token for push notifications
+  _i2.Future<bool> registerDeviceToken(
+    String fcmToken,
+    String deviceType,
+    String? deviceName,
+  ) =>
+      caller.callServerEndpoint<bool>(
+        'notification',
+        'registerDeviceToken',
+        {
+          'fcmToken': fcmToken,
+          'deviceType': deviceType,
+          'deviceName': deviceName,
+        },
+      );
+
+  /// Unregister a device token (called on logout or when user disables notifications)
+  _i2.Future<bool> unregisterDeviceToken(String fcmToken) =>
+      caller.callServerEndpoint<bool>(
+        'notification',
+        'unregisterDeviceToken',
+        {'fcmToken': fcmToken},
+      );
+
+  /// Get notification history for the user
+  _i2.Future<List<_i18.NotificationLog>> getNotificationHistory(
+          {required int limit}) =>
+      caller.callServerEndpoint<List<_i18.NotificationLog>>(
+        'notification',
+        'getNotificationHistory',
+        {'limit': limit},
+      );
+
+  /// Mark a notification as read
+  _i2.Future<bool> markNotificationRead(int notificationId) =>
+      caller.callServerEndpoint<bool>(
+        'notification',
+        'markNotificationRead',
+        {'notificationId': notificationId},
+      );
+
+  /// Get count of unread critical notifications
+  _i2.Future<int> getUnreadCriticalCount() => caller.callServerEndpoint<int>(
+        'notification',
+        'getUnreadCriticalCount',
+        {},
+      );
+
+  /// Send a test notification (for debugging)
+  _i2.Future<bool> sendTestNotification() => caller.callServerEndpoint<bool>(
+        'notification',
+        'sendTestNotification',
+        {},
+      );
+
+  /// Process and send notifications for unnotified critical emails
+  /// Call this to retroactively notify for emails processed before notification was enabled
+  _i2.Future<int> processUnnotifiedEmails() => caller.callServerEndpoint<int>(
+        'notification',
+        'processUnnotifiedEmails',
+        {},
+      );
+}
+
 /// {@category Endpoint}
 class EndpointSearch extends _i1.EndpointRef {
   EndpointSearch(_i1.EndpointCaller caller) : super(caller);
@@ -689,8 +763,8 @@ class EndpointSearch extends _i1.EndpointRef {
   String get name => 'search';
 
   /// Perform semantic search across captures
-  _i2.Future<_i18.SearchResult> search(_i19.SearchRequest request) =>
-      caller.callServerEndpoint<_i18.SearchResult>(
+  _i2.Future<_i19.SearchResult> search(_i20.SearchRequest request) =>
+      caller.callServerEndpoint<_i19.SearchResult>(
         'search',
         'search',
         {'request': request},
@@ -735,15 +809,15 @@ class EndpointUserPreference extends _i1.EndpointRef {
   String get name => 'userPreference';
 
   /// Get user preferences, creating default if not exists
-  _i2.Future<_i20.UserPreference> getPreferences() =>
-      caller.callServerEndpoint<_i20.UserPreference>(
+  _i2.Future<_i21.UserPreference> getPreferences() =>
+      caller.callServerEndpoint<_i21.UserPreference>(
         'userPreference',
         'getPreferences',
         {},
       );
 
   /// Update user preferences
-  _i2.Future<_i20.UserPreference> updatePreferences({
+  _i2.Future<_i21.UserPreference> updatePreferences({
     String? timezone,
     String? notificationTime,
     bool? overlayEnabled,
@@ -751,7 +825,7 @@ class EndpointUserPreference extends _i1.EndpointRef {
     bool? proactiveRemindersEnabled,
     String? theme,
   }) =>
-      caller.callServerEndpoint<_i20.UserPreference>(
+      caller.callServerEndpoint<_i21.UserPreference>(
         'userPreference',
         'updatePreferences',
         {
@@ -782,8 +856,8 @@ class EndpointGreeting extends _i1.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i2.Future<_i21.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i21.Greeting>(
+  _i2.Future<_i22.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i22.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -806,7 +880,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
           host,
-          _i22.Protocol(),
+          _i23.Protocol(),
           securityContext: securityContext,
           authenticationKeyManager: authenticationKeyManager,
           streamingConnectionTimeout: streamingConnectionTimeout,
@@ -823,6 +897,7 @@ class Client extends _i1.ServerpodClientShared {
     googleAuth = EndpointGoogleAuth(this);
     insight = EndpointInsight(this);
     integration = EndpointIntegration(this);
+    notification = EndpointNotification(this);
     search = EndpointSearch(this);
     userPreference = EndpointUserPreference(this);
     greeting = EndpointGreeting(this);
@@ -842,6 +917,8 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointIntegration integration;
 
+  late final EndpointNotification notification;
+
   late final EndpointSearch search;
 
   late final EndpointUserPreference userPreference;
@@ -857,6 +934,7 @@ class Client extends _i1.ServerpodClientShared {
         'googleAuth': googleAuth,
         'insight': insight,
         'integration': integration,
+        'notification': notification,
         'search': search,
         'userPreference': userPreference,
         'greeting': greeting,

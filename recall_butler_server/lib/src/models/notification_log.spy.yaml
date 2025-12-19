@@ -1,0 +1,29 @@
+### Notification Log for tracking sent push notifications
+### Prevents duplicate notifications and provides history
+class: NotificationLog
+table: notification_logs
+fields:
+  userId: int
+  # Reference to the source (email, calendar event, etc.)
+  sourceType: String  # 'email', 'calendar', 'reminder', 'action'
+  sourceId: String    # ID of the source item (gmailId, eventId, etc.)
+  # Notification content
+  title: String
+  body: String
+  priority: int       # 1-10 priority score
+  # Delivery status
+  sentAt: DateTime
+  deliveredAt: DateTime?
+  readAt: DateTime?
+  # FCM response
+  fcmMessageId: String?
+  error: String?
+
+indexes:
+  notification_user_idx:
+    fields: userId
+  notification_source_idx:
+    fields: sourceType, sourceId
+    unique: true
+  notification_sent_idx:
+    fields: sentAt

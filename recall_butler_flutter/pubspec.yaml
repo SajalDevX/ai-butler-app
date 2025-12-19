@@ -55,7 +55,11 @@ dependencies:
   # Google Sign-In for Gmail/Calendar integration
   google_sign_in: ^6.2.1
 
-  # Notifications
+  # Firebase for push notifications
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+
+  # Local notifications (for showing FCM notifications when app is in foreground)
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
 

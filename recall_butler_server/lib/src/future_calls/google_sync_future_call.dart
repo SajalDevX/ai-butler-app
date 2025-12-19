@@ -8,8 +8,8 @@ import '../services/email_ai_service.dart';
 /// Runs periodically to keep data fresh
 class GoogleSyncFutureCall extends FutureCall<SyncTask> {
   static const String callName = 'googleSync';
-  static const Duration syncInterval = Duration(minutes: 15);
-  static const Duration aiProcessInterval = Duration(minutes: 5);
+  static const Duration syncInterval = Duration(seconds: 30); // TODO: Change back to 15 minutes for production
+  static const Duration aiProcessInterval = Duration(seconds: 30); // TODO: Change back to 5 minutes for production
 
   @override
   Future<void> invoke(Session session, SyncTask? object) async {
@@ -125,7 +125,7 @@ class GoogleSyncFutureCall extends FutureCall<SyncTask> {
 /// Future call for processing AI analysis on emails
 class EmailAIProcessFutureCall extends FutureCall<SyncTask> {
   static const String callName = 'emailAIProcess';
-  static const Duration processInterval = Duration(minutes: 5);
+  static const Duration processInterval = Duration(seconds: 30); // TODO: Change back to 5 minutes for production
 
   @override
   Future<void> invoke(Session session, SyncTask? object) async {
