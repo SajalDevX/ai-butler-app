@@ -44,7 +44,16 @@ class EmailAIService {
 
         // Update email with analysis
         email.aiSummary = analysis['summary'] as String?;
-        email.importanceScore = analysis['importanceScore'] as int? ?? 5;
+        int importanceScore = analysis['importanceScore'] as int? ?? 5;
+
+        // Apply critical keyword override - certain words guarantee minimum score 9
+        importanceScore = _applyCriticalKeywordOverride(
+          email.subject,
+          email.bodyText,
+          importanceScore,
+        );
+
+        email.importanceScore = importanceScore;
         email.importanceReason = analysis['importanceReason'] as String?;
         email.sentiment = analysis['sentiment'] as String?;
         email.requiresAction = analysis['requiresAction'] as bool? ?? false;
@@ -843,5 +852,54 @@ Keep it under 300 words, use bullet points, be scannable.
     final content = candidates.first['content'] as Map<String, dynamic>;
     final parts = content['parts'] as List<dynamic>;
     return parts.first['text'] as String;
+  }
+
+  /// Apply critical keyword override to ensure life-threatening situations
+  /// always get high importance scores regardless of AI judgment
+  static int _applyCriticalKeywordOverride(
+    String subject,
+    String? bodyText,
+    int currentScore,
+  ) {
+    // Critical keywords that should guarantee minimum score of 9
+    const criticalKeywords = [
+      'died',
+      'death',
+      'passed away',
+      'passing away',
+      'emergency',
+      'hospital',
+      'accident',
+      'critical condition',
+      'life threatening',
+      'life-threatening',
+      'urgent medical',
+      'heart attack',
+      'stroke',
+      'ambulance',
+      'icu',
+      'intensive care',
+      'surgery',
+      'dying',
+      'fatal',
+      'killed',
+      'murder',
+      'suicide',
+      'overdose',
+    ];
+
+    final textToSearch = '${subject.toLowerCase()} ${(bodyText ?? '').toLowerCase()}';
+
+    for (final keyword in criticalKeywords) {
+      if (textToSearch.contains(keyword)) {
+        // If critical keyword found and score is below 9, boost it to 9
+        if (currentScore < 9) {
+          return 9;
+        }
+        break;
+      }
+    }
+
+    return currentScore;
   }
 }
