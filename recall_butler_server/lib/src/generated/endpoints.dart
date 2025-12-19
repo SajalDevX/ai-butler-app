@@ -17,12 +17,13 @@ import '../endpoints/dashboard_endpoint.dart' as _i5;
 import '../endpoints/google_auth_endpoint.dart' as _i6;
 import '../endpoints/insight_endpoint.dart' as _i7;
 import '../endpoints/integration_endpoint.dart' as _i8;
-import '../endpoints/search_endpoint.dart' as _i9;
-import '../endpoints/user_preference_endpoint.dart' as _i10;
-import '../greeting_endpoint.dart' as _i11;
+import '../endpoints/notification_endpoint.dart' as _i9;
+import '../endpoints/search_endpoint.dart' as _i10;
+import '../endpoints/user_preference_endpoint.dart' as _i11;
+import '../greeting_endpoint.dart' as _i12;
 import 'package:recall_butler_server/src/generated/capture_request.dart'
-    as _i12;
-import 'package:recall_butler_server/src/generated/search_request.dart' as _i13;
+    as _i13;
+import 'package:recall_butler_server/src/generated/search_request.dart' as _i14;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -70,19 +71,25 @@ class Endpoints extends _i1.EndpointDispatch {
           'integration',
           null,
         ),
-      'search': _i9.SearchEndpoint()
+      'notification': _i9.NotificationEndpoint()
+        ..initialize(
+          server,
+          'notification',
+          null,
+        ),
+      'search': _i10.SearchEndpoint()
         ..initialize(
           server,
           'search',
           null,
         ),
-      'userPreference': _i10.UserPreferenceEndpoint()
+      'userPreference': _i11.UserPreferenceEndpoint()
         ..initialize(
           server,
           'userPreference',
           null,
         ),
-      'greeting': _i11.GreetingEndpoint()
+      'greeting': _i12.GreetingEndpoint()
         ..initialize(
           server,
           'greeting',
@@ -397,7 +404,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i12.CaptureRequest>(),
+              type: _i1.getType<_i13.CaptureRequest>(),
               nullable: false,
             )
           },
@@ -1226,6 +1233,130 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['notification'] = _i1.EndpointConnector(
+      name: 'notification',
+      endpoint: endpoints['notification']!,
+      methodConnectors: {
+        'registerDeviceToken': _i1.MethodConnector(
+          name: 'registerDeviceToken',
+          params: {
+            'fcmToken': _i1.ParameterDescription(
+              name: 'fcmToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'deviceType': _i1.ParameterDescription(
+              name: 'deviceType',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'deviceName': _i1.ParameterDescription(
+              name: 'deviceName',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .registerDeviceToken(
+            session,
+            params['fcmToken'],
+            params['deviceType'],
+            params['deviceName'],
+          ),
+        ),
+        'unregisterDeviceToken': _i1.MethodConnector(
+          name: 'unregisterDeviceToken',
+          params: {
+            'fcmToken': _i1.ParameterDescription(
+              name: 'fcmToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .unregisterDeviceToken(
+            session,
+            params['fcmToken'],
+          ),
+        ),
+        'getNotificationHistory': _i1.MethodConnector(
+          name: 'getNotificationHistory',
+          params: {
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .getNotificationHistory(
+            session,
+            limit: params['limit'],
+          ),
+        ),
+        'markNotificationRead': _i1.MethodConnector(
+          name: 'markNotificationRead',
+          params: {
+            'notificationId': _i1.ParameterDescription(
+              name: 'notificationId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            )
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .markNotificationRead(
+            session,
+            params['notificationId'],
+          ),
+        ),
+        'getUnreadCriticalCount': _i1.MethodConnector(
+          name: 'getUnreadCriticalCount',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .getUnreadCriticalCount(session),
+        ),
+        'sendTestNotification': _i1.MethodConnector(
+          name: 'sendTestNotification',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .sendTestNotification(session),
+        ),
+        'processUnnotifiedEmails': _i1.MethodConnector(
+          name: 'processUnnotifiedEmails',
+          params: {},
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['notification'] as _i9.NotificationEndpoint)
+                  .processUnnotifiedEmails(session),
+        ),
+      },
+    );
     connectors['search'] = _i1.EndpointConnector(
       name: 'search',
       endpoint: endpoints['search']!,
@@ -1235,7 +1366,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'request': _i1.ParameterDescription(
               name: 'request',
-              type: _i1.getType<_i13.SearchRequest>(),
+              type: _i1.getType<_i14.SearchRequest>(),
               nullable: false,
             )
           },
@@ -1243,7 +1374,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i9.SearchEndpoint).search(
+              (endpoints['search'] as _i10.SearchEndpoint).search(
             session,
             params['request'],
           ),
@@ -1261,7 +1392,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i9.SearchEndpoint).quickSearch(
+              (endpoints['search'] as _i10.SearchEndpoint).quickSearch(
             session,
             params['query'],
           ),
@@ -1273,7 +1404,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i9.SearchEndpoint)
+              (endpoints['search'] as _i10.SearchEndpoint)
                   .getRecentSearches(session),
         ),
         'recordSearchClick': _i1.MethodConnector(
@@ -1294,7 +1425,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['search'] as _i9.SearchEndpoint).recordSearchClick(
+              (endpoints['search'] as _i10.SearchEndpoint).recordSearchClick(
             session,
             params['searchQueryId'],
             params['captureId'],
@@ -1313,7 +1444,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i11.UserPreferenceEndpoint)
                   .getPreferences(session),
         ),
         'updatePreferences': _i1.MethodConnector(
@@ -1354,7 +1485,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i11.UserPreferenceEndpoint)
                   .updatePreferences(
             session,
             timezone: params['timezone'],
@@ -1372,7 +1503,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['userPreference'] as _i10.UserPreferenceEndpoint)
+              (endpoints['userPreference'] as _i11.UserPreferenceEndpoint)
                   .toggleOverlay(session),
         ),
       },
@@ -1394,7 +1525,7 @@ class Endpoints extends _i1.EndpointDispatch {
             _i1.Session session,
             Map<String, dynamic> params,
           ) async =>
-              (endpoints['greeting'] as _i11.GreetingEndpoint).hello(
+              (endpoints['greeting'] as _i12.GreetingEndpoint).hello(
             session,
             params['name'],
           ),

@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../providers/client_provider.dart';
 import '../../providers/preferences_provider.dart';
 import '../../providers/google_auth_provider.dart';
 import '../../services/overlay_service.dart';
@@ -105,6 +106,8 @@ class SettingsScreen extends ConsumerWidget {
                       .updatePreferences(proactiveRemindersEnabled: value);
                 },
               ),
+              const Divider(height: 1),
+              _NotificationTestTile(),
             ],
           ),
           const SizedBox(height: 24),
@@ -687,6 +690,125 @@ class _GoogleIntegrationCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Notification test buttons for debugging push notifications
+class _NotificationTestTile extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_NotificationTestTile> createState() => _NotificationTestTileState();
+}
+
+class _NotificationTestTileState extends ConsumerState<_NotificationTestTile> {
+  bool _isLoading = false;
+
+  Future<void> _sendTestNotification() async {
+    setState(() => _isLoading = true);
+    try {
+      final client = ref.read(clientProvider);
+      final result = await client.notification.sendTestNotification();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result ? 'Test notification sent!' : 'Failed to send notification'),
+            backgroundColor: result ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _processUnnotifiedEmails() async {
+    setState(() => _isLoading = true);
+    try {
+      final client = ref.read(clientProvider);
+      final count = await client.notification.processUnnotifiedEmails();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sent $count notifications for critical emails'),
+            backgroundColor: count > 0 ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Iconsax.notification_bing, size: 20, color: AppColors.textSecondary),
+          ),
+          title: const Text('Test Push Notification'),
+          subtitle: const Text(
+            'Send a test notification to this device',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          trailing: _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Iconsax.arrow_right_3, size: 16, color: AppColors.textTertiary),
+          onTap: _isLoading ? null : _sendTestNotification,
+        ),
+        const Divider(height: 1),
+        ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Iconsax.sms_notification, size: 20, color: AppColors.textSecondary),
+          ),
+          title: const Text('Notify Critical Emails'),
+          subtitle: const Text(
+            'Send notifications for unnotified priority 9+ emails',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          trailing: _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Iconsax.arrow_right_3, size: 16, color: AppColors.textTertiary),
+          onTap: _isLoading ? null : _processUnnotifiedEmails,
+        ),
+      ],
     );
   }
 }

@@ -20,30 +20,34 @@ import 'capture_collection.dart' as _i8;
 import 'capture_request.dart' as _i9;
 import 'collection.dart' as _i10;
 import 'dashboard_stats.dart' as _i11;
-import 'email_draft_result.dart' as _i12;
-import 'email_summary.dart' as _i13;
-import 'google_auth_result.dart' as _i14;
-import 'google_auth_status.dart' as _i15;
-import 'google_token.dart' as _i16;
-import 'integration_dashboard.dart' as _i17;
-import 'meeting_prep_result.dart' as _i18;
-import 'morning_briefing.dart' as _i19;
-import 'quick_analysis_result.dart' as _i20;
-import 'reminder.dart' as _i21;
-import 'search_query.dart' as _i22;
-import 'search_request.dart' as _i23;
-import 'search_result.dart' as _i24;
-import 'sync_result.dart' as _i25;
-import 'sync_task.dart' as _i26;
-import 'token_usage_history.dart' as _i27;
-import 'user_preference.dart' as _i28;
-import 'weekly_digest.dart' as _i29;
-import 'package:recall_butler_server/src/generated/action.dart' as _i30;
-import 'package:recall_butler_server/src/generated/capture.dart' as _i31;
-import 'package:recall_butler_server/src/generated/collection.dart' as _i32;
-import 'package:recall_butler_server/src/generated/email_summary.dart' as _i33;
+import 'device_token.dart' as _i12;
+import 'email_draft_result.dart' as _i13;
+import 'email_summary.dart' as _i14;
+import 'google_auth_result.dart' as _i15;
+import 'google_auth_status.dart' as _i16;
+import 'google_token.dart' as _i17;
+import 'integration_dashboard.dart' as _i18;
+import 'meeting_prep_result.dart' as _i19;
+import 'morning_briefing.dart' as _i20;
+import 'notification_log.dart' as _i21;
+import 'quick_analysis_result.dart' as _i22;
+import 'reminder.dart' as _i23;
+import 'search_query.dart' as _i24;
+import 'search_request.dart' as _i25;
+import 'search_result.dart' as _i26;
+import 'sync_result.dart' as _i27;
+import 'sync_task.dart' as _i28;
+import 'token_usage_history.dart' as _i29;
+import 'user_preference.dart' as _i30;
+import 'weekly_digest.dart' as _i31;
+import 'package:recall_butler_server/src/generated/action.dart' as _i32;
+import 'package:recall_butler_server/src/generated/capture.dart' as _i33;
+import 'package:recall_butler_server/src/generated/collection.dart' as _i34;
+import 'package:recall_butler_server/src/generated/email_summary.dart' as _i35;
 import 'package:recall_butler_server/src/generated/calendar_event_cache.dart'
-    as _i34;
+    as _i36;
+import 'package:recall_butler_server/src/generated/notification_log.dart'
+    as _i37;
 export 'greeting.dart';
 export 'action.dart';
 export 'ai_processing_result.dart';
@@ -53,6 +57,7 @@ export 'capture_collection.dart';
 export 'capture_request.dart';
 export 'collection.dart';
 export 'dashboard_stats.dart';
+export 'device_token.dart';
 export 'email_draft_result.dart';
 export 'email_summary.dart';
 export 'google_auth_result.dart';
@@ -61,6 +66,7 @@ export 'google_token.dart';
 export 'integration_dashboard.dart';
 export 'meeting_prep_result.dart';
 export 'morning_briefing.dart';
+export 'notification_log.dart';
 export 'quick_analysis_result.dart';
 export 'reminder.dart';
 export 'search_query.dart';
@@ -868,6 +874,112 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'device_tokens',
+      dartName: 'DeviceToken',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'device_tokens_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fcmToken',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deviceType',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deviceName',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isActive',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastUsedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'device_tokens_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'device_token_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'device_token_fcm_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'fcmToken',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'email_summaries',
       dartName: 'EmailSummary',
       schema: 'public',
@@ -1272,6 +1384,147 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'expiresAt',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'notification_logs',
+      dartName: 'NotificationLog',
+      schema: 'public',
+      module: 'recall_butler',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'notification_logs_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sourceType',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sourceId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'title',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'body',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'priority',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sentAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deliveredAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'readAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fcmMessageId',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'error',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'notification_logs_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            )
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'notification_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            )
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'notification_source_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'sourceType',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'sourceId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'notification_sent_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'sentAt',
             )
           ],
           type: 'btree',
@@ -1728,59 +1981,65 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i11.DashboardStats) {
       return _i11.DashboardStats.fromJson(data) as T;
     }
-    if (t == _i12.EmailDraftResult) {
-      return _i12.EmailDraftResult.fromJson(data) as T;
+    if (t == _i12.DeviceToken) {
+      return _i12.DeviceToken.fromJson(data) as T;
     }
-    if (t == _i13.EmailSummary) {
-      return _i13.EmailSummary.fromJson(data) as T;
+    if (t == _i13.EmailDraftResult) {
+      return _i13.EmailDraftResult.fromJson(data) as T;
     }
-    if (t == _i14.GoogleAuthResult) {
-      return _i14.GoogleAuthResult.fromJson(data) as T;
+    if (t == _i14.EmailSummary) {
+      return _i14.EmailSummary.fromJson(data) as T;
     }
-    if (t == _i15.GoogleAuthStatus) {
-      return _i15.GoogleAuthStatus.fromJson(data) as T;
+    if (t == _i15.GoogleAuthResult) {
+      return _i15.GoogleAuthResult.fromJson(data) as T;
     }
-    if (t == _i16.GoogleToken) {
-      return _i16.GoogleToken.fromJson(data) as T;
+    if (t == _i16.GoogleAuthStatus) {
+      return _i16.GoogleAuthStatus.fromJson(data) as T;
     }
-    if (t == _i17.IntegrationDashboard) {
-      return _i17.IntegrationDashboard.fromJson(data) as T;
+    if (t == _i17.GoogleToken) {
+      return _i17.GoogleToken.fromJson(data) as T;
     }
-    if (t == _i18.MeetingPrepResult) {
-      return _i18.MeetingPrepResult.fromJson(data) as T;
+    if (t == _i18.IntegrationDashboard) {
+      return _i18.IntegrationDashboard.fromJson(data) as T;
     }
-    if (t == _i19.MorningBriefing) {
-      return _i19.MorningBriefing.fromJson(data) as T;
+    if (t == _i19.MeetingPrepResult) {
+      return _i19.MeetingPrepResult.fromJson(data) as T;
     }
-    if (t == _i20.QuickAnalysisResult) {
-      return _i20.QuickAnalysisResult.fromJson(data) as T;
+    if (t == _i20.MorningBriefing) {
+      return _i20.MorningBriefing.fromJson(data) as T;
     }
-    if (t == _i21.Reminder) {
-      return _i21.Reminder.fromJson(data) as T;
+    if (t == _i21.NotificationLog) {
+      return _i21.NotificationLog.fromJson(data) as T;
     }
-    if (t == _i22.SearchQuery) {
-      return _i22.SearchQuery.fromJson(data) as T;
+    if (t == _i22.QuickAnalysisResult) {
+      return _i22.QuickAnalysisResult.fromJson(data) as T;
     }
-    if (t == _i23.SearchRequest) {
-      return _i23.SearchRequest.fromJson(data) as T;
+    if (t == _i23.Reminder) {
+      return _i23.Reminder.fromJson(data) as T;
     }
-    if (t == _i24.SearchResult) {
-      return _i24.SearchResult.fromJson(data) as T;
+    if (t == _i24.SearchQuery) {
+      return _i24.SearchQuery.fromJson(data) as T;
     }
-    if (t == _i25.SyncResult) {
-      return _i25.SyncResult.fromJson(data) as T;
+    if (t == _i25.SearchRequest) {
+      return _i25.SearchRequest.fromJson(data) as T;
     }
-    if (t == _i26.SyncTask) {
-      return _i26.SyncTask.fromJson(data) as T;
+    if (t == _i26.SearchResult) {
+      return _i26.SearchResult.fromJson(data) as T;
     }
-    if (t == _i27.TokenUsageHistory) {
-      return _i27.TokenUsageHistory.fromJson(data) as T;
+    if (t == _i27.SyncResult) {
+      return _i27.SyncResult.fromJson(data) as T;
     }
-    if (t == _i28.UserPreference) {
-      return _i28.UserPreference.fromJson(data) as T;
+    if (t == _i28.SyncTask) {
+      return _i28.SyncTask.fromJson(data) as T;
     }
-    if (t == _i29.WeeklyDigest) {
-      return _i29.WeeklyDigest.fromJson(data) as T;
+    if (t == _i29.TokenUsageHistory) {
+      return _i29.TokenUsageHistory.fromJson(data) as T;
+    }
+    if (t == _i30.UserPreference) {
+      return _i30.UserPreference.fromJson(data) as T;
+    }
+    if (t == _i31.WeeklyDigest) {
+      return _i31.WeeklyDigest.fromJson(data) as T;
     }
     if (t == _i1.getType<_i3.Greeting?>()) {
       return (data != null ? _i3.Greeting.fromJson(data) : null) as T;
@@ -1809,61 +2068,67 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i11.DashboardStats?>()) {
       return (data != null ? _i11.DashboardStats.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.EmailDraftResult?>()) {
-      return (data != null ? _i12.EmailDraftResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.DeviceToken?>()) {
+      return (data != null ? _i12.DeviceToken.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.EmailSummary?>()) {
-      return (data != null ? _i13.EmailSummary.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.EmailDraftResult?>()) {
+      return (data != null ? _i13.EmailDraftResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.GoogleAuthResult?>()) {
-      return (data != null ? _i14.GoogleAuthResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.EmailSummary?>()) {
+      return (data != null ? _i14.EmailSummary.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.GoogleAuthStatus?>()) {
-      return (data != null ? _i15.GoogleAuthStatus.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.GoogleAuthResult?>()) {
+      return (data != null ? _i15.GoogleAuthResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.GoogleToken?>()) {
-      return (data != null ? _i16.GoogleToken.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.GoogleAuthStatus?>()) {
+      return (data != null ? _i16.GoogleAuthStatus.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.IntegrationDashboard?>()) {
-      return (data != null ? _i17.IntegrationDashboard.fromJson(data) : null)
+    if (t == _i1.getType<_i17.GoogleToken?>()) {
+      return (data != null ? _i17.GoogleToken.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.IntegrationDashboard?>()) {
+      return (data != null ? _i18.IntegrationDashboard.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i18.MeetingPrepResult?>()) {
-      return (data != null ? _i18.MeetingPrepResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.MeetingPrepResult?>()) {
+      return (data != null ? _i19.MeetingPrepResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.MorningBriefing?>()) {
-      return (data != null ? _i19.MorningBriefing.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.MorningBriefing?>()) {
+      return (data != null ? _i20.MorningBriefing.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i20.QuickAnalysisResult?>()) {
-      return (data != null ? _i20.QuickAnalysisResult.fromJson(data) : null)
+    if (t == _i1.getType<_i21.NotificationLog?>()) {
+      return (data != null ? _i21.NotificationLog.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i22.QuickAnalysisResult?>()) {
+      return (data != null ? _i22.QuickAnalysisResult.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i21.Reminder?>()) {
-      return (data != null ? _i21.Reminder.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i23.Reminder?>()) {
+      return (data != null ? _i23.Reminder.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i22.SearchQuery?>()) {
-      return (data != null ? _i22.SearchQuery.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.SearchQuery?>()) {
+      return (data != null ? _i24.SearchQuery.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i23.SearchRequest?>()) {
-      return (data != null ? _i23.SearchRequest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i25.SearchRequest?>()) {
+      return (data != null ? _i25.SearchRequest.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i24.SearchResult?>()) {
-      return (data != null ? _i24.SearchResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i26.SearchResult?>()) {
+      return (data != null ? _i26.SearchResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i25.SyncResult?>()) {
-      return (data != null ? _i25.SyncResult.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i27.SyncResult?>()) {
+      return (data != null ? _i27.SyncResult.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i26.SyncTask?>()) {
-      return (data != null ? _i26.SyncTask.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i28.SyncTask?>()) {
+      return (data != null ? _i28.SyncTask.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i27.TokenUsageHistory?>()) {
-      return (data != null ? _i27.TokenUsageHistory.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i29.TokenUsageHistory?>()) {
+      return (data != null ? _i29.TokenUsageHistory.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i28.UserPreference?>()) {
-      return (data != null ? _i28.UserPreference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i30.UserPreference?>()) {
+      return (data != null ? _i30.UserPreference.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i29.WeeklyDigest?>()) {
-      return (data != null ? _i29.WeeklyDigest.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i31.WeeklyDigest?>()) {
+      return (data != null ? _i31.WeeklyDigest.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -1873,9 +2138,9 @@ class Protocol extends _i1.SerializationManagerServer {
           ? (data as List).map((e) => deserialize<String>(e)).toList()
           : null) as T;
     }
-    if (t == List<_i13.EmailSummary>) {
+    if (t == List<_i14.EmailSummary>) {
       return (data as List)
-          .map((e) => deserialize<_i13.EmailSummary>(e))
+          .map((e) => deserialize<_i14.EmailSummary>(e))
           .toList() as T;
     }
     if (t == List<_i6.CalendarEventCache>) {
@@ -1892,8 +2157,8 @@ class Protocol extends _i1.SerializationManagerServer {
           ? (data as List).map((e) => deserialize<String>(e)).toList()
           : null) as T;
     }
-    if (t == List<_i30.Action>) {
-      return (data as List).map((e) => deserialize<_i30.Action>(e)).toList()
+    if (t == List<_i32.Action>) {
+      return (data as List).map((e) => deserialize<_i32.Action>(e)).toList()
           as T;
     }
     if (t == List<Map<String, dynamic>>) {
@@ -1905,22 +2170,27 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data as Map).map((k, v) =>
           MapEntry(deserialize<String>(k), deserialize<dynamic>(v))) as T;
     }
-    if (t == List<_i31.Capture>) {
-      return (data as List).map((e) => deserialize<_i31.Capture>(e)).toList()
+    if (t == List<_i33.Capture>) {
+      return (data as List).map((e) => deserialize<_i33.Capture>(e)).toList()
           as T;
     }
-    if (t == List<_i32.Collection>) {
-      return (data as List).map((e) => deserialize<_i32.Collection>(e)).toList()
+    if (t == List<_i34.Collection>) {
+      return (data as List).map((e) => deserialize<_i34.Collection>(e)).toList()
           as T;
     }
-    if (t == List<_i33.EmailSummary>) {
+    if (t == List<_i35.EmailSummary>) {
       return (data as List)
-          .map((e) => deserialize<_i33.EmailSummary>(e))
+          .map((e) => deserialize<_i35.EmailSummary>(e))
           .toList() as T;
     }
-    if (t == List<_i34.CalendarEventCache>) {
+    if (t == List<_i36.CalendarEventCache>) {
       return (data as List)
-          .map((e) => deserialize<_i34.CalendarEventCache>(e))
+          .map((e) => deserialize<_i36.CalendarEventCache>(e))
+          .toList() as T;
+    }
+    if (t == List<_i37.NotificationLog>) {
+      return (data as List)
+          .map((e) => deserialize<_i37.NotificationLog>(e))
           .toList() as T;
     }
     if (t == List<String>) {
@@ -1963,58 +2233,64 @@ class Protocol extends _i1.SerializationManagerServer {
     if (data is _i11.DashboardStats) {
       return 'DashboardStats';
     }
-    if (data is _i12.EmailDraftResult) {
+    if (data is _i12.DeviceToken) {
+      return 'DeviceToken';
+    }
+    if (data is _i13.EmailDraftResult) {
       return 'EmailDraftResult';
     }
-    if (data is _i13.EmailSummary) {
+    if (data is _i14.EmailSummary) {
       return 'EmailSummary';
     }
-    if (data is _i14.GoogleAuthResult) {
+    if (data is _i15.GoogleAuthResult) {
       return 'GoogleAuthResult';
     }
-    if (data is _i15.GoogleAuthStatus) {
+    if (data is _i16.GoogleAuthStatus) {
       return 'GoogleAuthStatus';
     }
-    if (data is _i16.GoogleToken) {
+    if (data is _i17.GoogleToken) {
       return 'GoogleToken';
     }
-    if (data is _i17.IntegrationDashboard) {
+    if (data is _i18.IntegrationDashboard) {
       return 'IntegrationDashboard';
     }
-    if (data is _i18.MeetingPrepResult) {
+    if (data is _i19.MeetingPrepResult) {
       return 'MeetingPrepResult';
     }
-    if (data is _i19.MorningBriefing) {
+    if (data is _i20.MorningBriefing) {
       return 'MorningBriefing';
     }
-    if (data is _i20.QuickAnalysisResult) {
+    if (data is _i21.NotificationLog) {
+      return 'NotificationLog';
+    }
+    if (data is _i22.QuickAnalysisResult) {
       return 'QuickAnalysisResult';
     }
-    if (data is _i21.Reminder) {
+    if (data is _i23.Reminder) {
       return 'Reminder';
     }
-    if (data is _i22.SearchQuery) {
+    if (data is _i24.SearchQuery) {
       return 'SearchQuery';
     }
-    if (data is _i23.SearchRequest) {
+    if (data is _i25.SearchRequest) {
       return 'SearchRequest';
     }
-    if (data is _i24.SearchResult) {
+    if (data is _i26.SearchResult) {
       return 'SearchResult';
     }
-    if (data is _i25.SyncResult) {
+    if (data is _i27.SyncResult) {
       return 'SyncResult';
     }
-    if (data is _i26.SyncTask) {
+    if (data is _i28.SyncTask) {
       return 'SyncTask';
     }
-    if (data is _i27.TokenUsageHistory) {
+    if (data is _i29.TokenUsageHistory) {
       return 'TokenUsageHistory';
     }
-    if (data is _i28.UserPreference) {
+    if (data is _i30.UserPreference) {
       return 'UserPreference';
     }
-    if (data is _i29.WeeklyDigest) {
+    if (data is _i31.WeeklyDigest) {
       return 'WeeklyDigest';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -2057,59 +2333,65 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'DashboardStats') {
       return deserialize<_i11.DashboardStats>(data['data']);
     }
+    if (dataClassName == 'DeviceToken') {
+      return deserialize<_i12.DeviceToken>(data['data']);
+    }
     if (dataClassName == 'EmailDraftResult') {
-      return deserialize<_i12.EmailDraftResult>(data['data']);
+      return deserialize<_i13.EmailDraftResult>(data['data']);
     }
     if (dataClassName == 'EmailSummary') {
-      return deserialize<_i13.EmailSummary>(data['data']);
+      return deserialize<_i14.EmailSummary>(data['data']);
     }
     if (dataClassName == 'GoogleAuthResult') {
-      return deserialize<_i14.GoogleAuthResult>(data['data']);
+      return deserialize<_i15.GoogleAuthResult>(data['data']);
     }
     if (dataClassName == 'GoogleAuthStatus') {
-      return deserialize<_i15.GoogleAuthStatus>(data['data']);
+      return deserialize<_i16.GoogleAuthStatus>(data['data']);
     }
     if (dataClassName == 'GoogleToken') {
-      return deserialize<_i16.GoogleToken>(data['data']);
+      return deserialize<_i17.GoogleToken>(data['data']);
     }
     if (dataClassName == 'IntegrationDashboard') {
-      return deserialize<_i17.IntegrationDashboard>(data['data']);
+      return deserialize<_i18.IntegrationDashboard>(data['data']);
     }
     if (dataClassName == 'MeetingPrepResult') {
-      return deserialize<_i18.MeetingPrepResult>(data['data']);
+      return deserialize<_i19.MeetingPrepResult>(data['data']);
     }
     if (dataClassName == 'MorningBriefing') {
-      return deserialize<_i19.MorningBriefing>(data['data']);
+      return deserialize<_i20.MorningBriefing>(data['data']);
+    }
+    if (dataClassName == 'NotificationLog') {
+      return deserialize<_i21.NotificationLog>(data['data']);
     }
     if (dataClassName == 'QuickAnalysisResult') {
-      return deserialize<_i20.QuickAnalysisResult>(data['data']);
+      return deserialize<_i22.QuickAnalysisResult>(data['data']);
     }
     if (dataClassName == 'Reminder') {
-      return deserialize<_i21.Reminder>(data['data']);
+      return deserialize<_i23.Reminder>(data['data']);
     }
     if (dataClassName == 'SearchQuery') {
-      return deserialize<_i22.SearchQuery>(data['data']);
+      return deserialize<_i24.SearchQuery>(data['data']);
     }
     if (dataClassName == 'SearchRequest') {
-      return deserialize<_i23.SearchRequest>(data['data']);
+      return deserialize<_i25.SearchRequest>(data['data']);
     }
     if (dataClassName == 'SearchResult') {
-      return deserialize<_i24.SearchResult>(data['data']);
+      return deserialize<_i26.SearchResult>(data['data']);
     }
     if (dataClassName == 'SyncResult') {
-      return deserialize<_i25.SyncResult>(data['data']);
+      return deserialize<_i27.SyncResult>(data['data']);
     }
     if (dataClassName == 'SyncTask') {
-      return deserialize<_i26.SyncTask>(data['data']);
+      return deserialize<_i28.SyncTask>(data['data']);
     }
     if (dataClassName == 'TokenUsageHistory') {
-      return deserialize<_i27.TokenUsageHistory>(data['data']);
+      return deserialize<_i29.TokenUsageHistory>(data['data']);
     }
     if (dataClassName == 'UserPreference') {
-      return deserialize<_i28.UserPreference>(data['data']);
+      return deserialize<_i30.UserPreference>(data['data']);
     }
     if (dataClassName == 'WeeklyDigest') {
-      return deserialize<_i29.WeeklyDigest>(data['data']);
+      return deserialize<_i31.WeeklyDigest>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -2137,18 +2419,22 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i8.CaptureCollection.t;
       case _i10.Collection:
         return _i10.Collection.t;
-      case _i13.EmailSummary:
-        return _i13.EmailSummary.t;
-      case _i16.GoogleToken:
-        return _i16.GoogleToken.t;
-      case _i21.Reminder:
-        return _i21.Reminder.t;
-      case _i22.SearchQuery:
-        return _i22.SearchQuery.t;
-      case _i27.TokenUsageHistory:
-        return _i27.TokenUsageHistory.t;
-      case _i28.UserPreference:
-        return _i28.UserPreference.t;
+      case _i12.DeviceToken:
+        return _i12.DeviceToken.t;
+      case _i14.EmailSummary:
+        return _i14.EmailSummary.t;
+      case _i17.GoogleToken:
+        return _i17.GoogleToken.t;
+      case _i21.NotificationLog:
+        return _i21.NotificationLog.t;
+      case _i23.Reminder:
+        return _i23.Reminder.t;
+      case _i24.SearchQuery:
+        return _i24.SearchQuery.t;
+      case _i29.TokenUsageHistory:
+        return _i29.TokenUsageHistory.t;
+      case _i30.UserPreference:
+        return _i30.UserPreference.t;
     }
     return null;
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 
 import 'providers/capture_provider.dart';
+import 'providers/push_notification_provider.dart';
 import 'screens/capture/capture_modal.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -50,6 +51,16 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     _setupOverlayCallback();
+    _initializePushNotifications();
+  }
+
+  /// Initialize push notifications and register device token
+  Future<void> _initializePushNotifications() async {
+    // Delay slightly to ensure widget tree is built
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      await ref.read(pushNotificationProvider.notifier).initialize();
+    }
   }
 
   void _setupOverlayCallback() {

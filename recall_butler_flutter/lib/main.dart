@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,10 +8,20 @@ import 'package:recall_butler_client/recall_butler_client.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import 'firebase_options.dart';
 import 'src/app.dart';
 import 'src/providers/client_provider.dart';
 import 'src/services/api_logger.dart';
 import 'src/services/notification_service.dart';
+
+/// Background message handler for FCM - must be top-level
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  debugPrint('Background message: ${message.notification?.title}');
+}
 
 /// Global Serverpod client instance
 late final Client client;
@@ -36,7 +48,13 @@ Future<void> main() async {
   // Configure timeago for relative timestamps
   timeago.setLocaleMessages('en', timeago.EnMessages());
 
-  // Initialize notification service
+  // Initialize Firebase for push notifications
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Initialize local notification service
   await NotificationService().initialize();
   await NotificationService().requestPermissions();
 

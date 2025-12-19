@@ -1,4 +1,4 @@
-package com.example.recall_butler_flutter
+package com.recallbutler.app
 
 import android.app.Notification
 import android.app.NotificationChannel

@@ -1,4 +1,4 @@
-package com.example.recall_butler_flutter
+package com.recallbutler.app
 
 import android.content.Context
 import android.content.Intent

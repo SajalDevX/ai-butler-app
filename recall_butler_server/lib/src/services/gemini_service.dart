@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'token_optimizer_service.dart';
+import 'multi_model_service.dart';
 
 /// Service for interacting with Google Gemini AI
 /// Uses Intelligent Adaptive Token Management for optimal API usage
@@ -757,8 +758,8 @@ Be conversational and helpful, like a butler summarizing the week.
             await Future.delayed(Duration(seconds: delaySeconds));
             continue;
           }
-          // Last attempt failed with rate limit
-          throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
+          // Last attempt failed with rate limit - throw specific exception
+          throw RateLimitException('gemini', 'Gemini API rate limited (429) after $_maxRetries retries');
         }
 
         // For other errors, throw immediately

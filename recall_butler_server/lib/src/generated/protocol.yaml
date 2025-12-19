@@ -59,6 +59,14 @@ integration:
   - generateMeetingPrep:
   - syncCalendar:
   - getDashboard:
+notification:
+  - registerDeviceToken:
+  - unregisterDeviceToken:
+  - getNotificationHistory:
+  - markNotificationRead:
+  - getUnreadCriticalCount:
+  - sendTestNotification:
+  - processUnnotifiedEmails:
 search:
   - search:
   - quickSearch:

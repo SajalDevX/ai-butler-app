@@ -4,13 +4,17 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'gmail_service.dart';
 import 'calendar_service.dart';
+import 'groq_service.dart';
+import 'multi_model_service.dart';
+import 'push_notification_service.dart';
 
 /// AI-powered email analysis and draft generation service
-/// Uses Gemini to analyze emails, score importance, and generate responses
+/// Uses Gemini with Groq fallback to analyze emails, score importance, and generate responses
 class EmailAIService {
   static const String _apiBaseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
   static const String _model = 'gemini-2.5-flash';
+  static const int _maxRetries = 3;
 
   /// Analyze unprocessed emails for a user
   static Future<int> analyzeUnprocessedEmails(
@@ -63,6 +67,16 @@ class EmailAIService {
           'Analyzed email ${email.id}: importance=${email.importanceScore}, '
           'requiresAction=${email.requiresAction}',
         );
+
+        // Send push notification for critical emails (priority >= 9)
+        if (email.importanceScore >= PushNotificationService.criticalPriorityThreshold) {
+          try {
+            await PushNotificationService.notifyCriticalEmail(session, email, userId);
+            session.log('Push notification sent for critical email ${email.id}');
+          } catch (notifyError) {
+            session.log('Failed to send push notification: $notifyError', level: LogLevel.warning);
+          }
+        }
       } catch (e) {
         session.log('Failed to analyze email ${email.id}: $e', level: LogLevel.warning);
         email.processingError = e.toString();
@@ -75,8 +89,77 @@ class EmailAIService {
     return processedCount;
   }
 
-  /// Analyze a single email
+  /// Analyze a single email with multi-model fallback
   static Future<Map<String, dynamic>> _analyzeEmail(
+    Session session,
+    String apiKey,
+    EmailSummary email,
+  ) async {
+    // Check if Gemini is rate limited, try Groq first if so
+    if (MultiModelService.isProviderRateLimited(ModelProvider.gemini)) {
+      session.log('Gemini rate limited, trying Groq for email analysis');
+      final groqResult = await GroqService.analyzeEmail(
+        session,
+        email.fromEmail,
+        email.fromName,
+        email.subject,
+        email.receivedAt,
+        email.snippet,
+        email.bodyText,
+      );
+      if (groqResult != null) {
+        MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+        return groqResult;
+      }
+    }
+
+    // Try Gemini first
+    try {
+      final result = await _analyzeEmailWithGemini(session, apiKey, email);
+      MultiModelService.clearProviderRateLimit(ModelProvider.gemini);
+      return result;
+    } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      final isRateLimit = errorStr.contains('429') ||
+          errorStr.contains('rate limit') ||
+          errorStr.contains('quota');
+      final isParseError = e is FormatException ||
+          errorStr.contains('formatexception') ||
+          errorStr.contains('unexpected end') ||
+          errorStr.contains('invalid json');
+
+      if (isRateLimit || isParseError) {
+        final reason = isRateLimit ? 'rate limited' : 'parse error';
+        session.log('Gemini $reason, falling back to Groq', level: LogLevel.warning);
+
+        if (isRateLimit) {
+          MultiModelService.markProviderRateLimited(ModelProvider.gemini);
+        }
+
+        // Try Groq as fallback
+        final groqResult = await GroqService.analyzeEmail(
+          session,
+          email.fromEmail,
+          email.fromName,
+          email.subject,
+          email.receivedAt,
+          email.snippet,
+          email.bodyText,
+        );
+
+        if (groqResult != null) {
+          MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+          return groqResult;
+        }
+      }
+
+      // Re-throw if no fallback succeeded
+      rethrow;
+    }
+  }
+
+  /// Analyze email using Gemini API
+  static Future<Map<String, dynamic>> _analyzeEmailWithGemini(
     Session session,
     String apiKey,
     EmailSummary email,
@@ -121,27 +204,49 @@ Consider these factors for importance:
 - Is it a calendar invite or meeting-related?
 ''';
 
-    final response = await http.post(
-      Uri.parse('$_apiBaseUrl/$_model:generateContent?key=$apiKey'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'contents': [
-          {
-            'parts': [
-              {'text': prompt}
-            ]
-          }
-        ],
-        'generationConfig': {
-          'temperature': 0.3,
-          'maxOutputTokens': 500,
-          'responseMimeType': 'application/json',
-        },
-      }),
-    );
+    http.Response? response;
 
-    if (response.statusCode != 200) {
+    // Retry logic with exponential backoff
+    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+      response = await http.post(
+        Uri.parse('$_apiBaseUrl/$_model:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.3,
+            'maxOutputTokens': 500,
+            'responseMimeType': 'application/json',
+          },
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        break;
+      }
+
+      // Handle rate limit (429) and server unavailable (503)
+      if (response.statusCode == 429 || response.statusCode == 503) {
+        if (attempt < _maxRetries - 1) {
+          final delaySeconds = 2 << attempt;
+          session.log('Rate limited (${response.statusCode}), retrying in ${delaySeconds}s');
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
+        }
+        throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
+      }
+
       throw Exception('Gemini API error: ${response.statusCode}');
+    }
+
+    if (response == null || response.statusCode != 200) {
+      throw Exception('Gemini API error: ${response?.statusCode}');
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -158,7 +263,7 @@ Consider these factors for importance:
     return jsonDecode(text) as Map<String, dynamic>;
   }
 
-  /// Generate draft reply for an email
+  /// Generate draft reply for an email with multi-model fallback
   static Future<String?> generateDraftReply(
     Session session,
     int emailId, {
@@ -169,8 +274,82 @@ Consider these factors for importance:
     if (email == null) return null;
 
     final apiKey = session.serverpod.getPassword('geminiApiKey');
-    if (apiKey == null) return null;
 
+    String? draft;
+
+    // Check if Gemini is rate limited, try Groq first if so
+    if (MultiModelService.isProviderRateLimited(ModelProvider.gemini)) {
+      session.log('Gemini rate limited, trying Groq for draft generation');
+      draft = await GroqService.generateDraftReply(
+        session,
+        email.fromEmail,
+        email.fromName,
+        email.subject,
+        email.bodyText,
+        email.snippet,
+        tone: tone,
+        additionalContext: additionalContext,
+      );
+      if (draft != null) {
+        MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+      }
+    }
+
+    // Try Gemini if we don't have a draft yet
+    if (draft == null && apiKey != null) {
+      try {
+        draft = await _generateDraftWithGemini(session, apiKey, email, tone, additionalContext);
+        if (draft != null) {
+          MultiModelService.clearProviderRateLimit(ModelProvider.gemini);
+        }
+      } catch (e) {
+        final isRateLimit = e.toString().contains('429') ||
+            e.toString().contains('rate limit') ||
+            e.toString().contains('quota');
+
+        if (isRateLimit) {
+          session.log('Gemini rate limited, falling back to Groq for draft', level: LogLevel.warning);
+          MultiModelService.markProviderRateLimited(ModelProvider.gemini);
+
+          draft = await GroqService.generateDraftReply(
+            session,
+            email.fromEmail,
+            email.fromName,
+            email.subject,
+            email.bodyText,
+            email.snippet,
+            tone: tone,
+            additionalContext: additionalContext,
+          );
+
+          if (draft != null) {
+            MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+          }
+        } else {
+          session.log('Error generating draft: $e', level: LogLevel.error);
+        }
+      }
+    }
+
+    // Save draft if we got one
+    if (draft != null) {
+      email.draftReply = draft;
+      email.draftTone = tone;
+      email.updatedAt = DateTime.now();
+      await EmailSummary.db.updateRow(session, email);
+    }
+
+    return draft;
+  }
+
+  /// Generate draft reply using Gemini API
+  static Future<String?> _generateDraftWithGemini(
+    Session session,
+    String apiKey,
+    EmailSummary email,
+    String tone,
+    String? additionalContext,
+  ) async {
     final prompt = '''
 Generate a draft reply to this email.
 
@@ -190,8 +369,10 @@ ${additionalContext != null ? '- Additional context: $additionalContext' : ''}
 Generate ONLY the reply body text, no subject or headers. Start directly with the greeting.
 ''';
 
-    try {
-      final response = await http.post(
+    http.Response? response;
+
+    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+      response = await http.post(
         Uri.parse('$_apiBaseUrl/$_model:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -209,34 +390,37 @@ Generate ONLY the reply body text, no subject or headers. Start directly with th
         }),
       );
 
-      if (response.statusCode != 200) {
-        session.log('Failed to generate draft: ${response.statusCode}', level: LogLevel.error);
-        return null;
+      if (response.statusCode == 200) {
+        break;
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final candidates = data['candidates'] as List<dynamic>?;
+      if (response.statusCode == 429 || response.statusCode == 503) {
+        if (attempt < _maxRetries - 1) {
+          final delaySeconds = 2 << attempt;
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
+        }
+        throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
+      }
 
-      if (candidates == null || candidates.isEmpty) return null;
+      throw Exception('Gemini API error: ${response.statusCode}');
+    }
 
-      final content = candidates.first['content'] as Map<String, dynamic>;
-      final parts = content['parts'] as List<dynamic>;
-      final draft = parts.first['text'] as String;
-
-      // Save draft to email
-      email.draftReply = draft;
-      email.draftTone = tone;
-      email.updatedAt = DateTime.now();
-      await EmailSummary.db.updateRow(session, email);
-
-      return draft;
-    } catch (e) {
-      session.log('Error generating draft: $e', level: LogLevel.error);
+    if (response == null || response.statusCode != 200) {
       return null;
     }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final candidates = data['candidates'] as List<dynamic>?;
+
+    if (candidates == null || candidates.isEmpty) return null;
+
+    final content = candidates.first['content'] as Map<String, dynamic>;
+    final parts = content['parts'] as List<dynamic>;
+    return parts.first['text'] as String;
   }
 
-  /// Generate meeting context/preparation brief
+  /// Generate meeting context/preparation brief with multi-model fallback
   static Future<String?> generateMeetingContext(
     Session session,
     int eventId,
@@ -246,7 +430,6 @@ Generate ONLY the reply body text, no subject or headers. Start directly with th
     if (event == null) return null;
 
     final apiKey = session.serverpod.getPassword('geminiApiKey');
-    if (apiKey == null) return null;
 
     // Find related emails (from attendees or mentioning the meeting)
     final attendees = event.attendeesJson != null
@@ -309,6 +492,90 @@ Generate ONLY the reply body text, no subject or headers. Start directly with th
   Date: ${e.receivedAt.toIso8601String()}
 ''').join('\n');
 
+    String? contextBrief;
+
+    // Check if Gemini is rate limited, try Groq first if so
+    if (MultiModelService.isProviderRateLimited(ModelProvider.gemini)) {
+      session.log('Gemini rate limited, trying Groq for meeting context');
+      contextBrief = await GroqService.generateMeetingContext(
+        session,
+        event.title,
+        event.startTime,
+        event.endTime,
+        event.location,
+        event.description,
+        attendees,
+        emailContext,
+      );
+      if (contextBrief != null) {
+        MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+      }
+    }
+
+    // Try Gemini if we don't have context yet
+    if (contextBrief == null && apiKey != null) {
+      try {
+        contextBrief = await _generateMeetingContextWithGemini(
+          session,
+          apiKey,
+          event,
+          attendees,
+          emailContext,
+        );
+        if (contextBrief != null) {
+          MultiModelService.clearProviderRateLimit(ModelProvider.gemini);
+        }
+      } catch (e) {
+        final isRateLimit = e.toString().contains('429') ||
+            e.toString().contains('rate limit') ||
+            e.toString().contains('quota');
+
+        if (isRateLimit) {
+          session.log('Gemini rate limited, falling back to Groq for meeting context',
+              level: LogLevel.warning);
+          MultiModelService.markProviderRateLimited(ModelProvider.gemini);
+
+          contextBrief = await GroqService.generateMeetingContext(
+            session,
+            event.title,
+            event.startTime,
+            event.endTime,
+            event.location,
+            event.description,
+            attendees,
+            emailContext,
+          );
+
+          if (contextBrief != null) {
+            MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+          }
+        } else {
+          session.log('Error generating meeting context: $e', level: LogLevel.error);
+        }
+      }
+    }
+
+    // Save to event if we got context
+    if (contextBrief != null) {
+      await CalendarService.updateEventContext(
+        session,
+        eventId,
+        contextBrief: contextBrief,
+        relatedEmailIds: relatedEmails.map((e) => e.gmailId).toList(),
+      );
+    }
+
+    return contextBrief;
+  }
+
+  /// Generate meeting context using Gemini API
+  static Future<String?> _generateMeetingContextWithGemini(
+    Session session,
+    String apiKey,
+    CalendarEventCache event,
+    List<String> attendees,
+    String emailContext,
+  ) async {
     final prompt = '''
 Generate a pre-meeting brief for this upcoming meeting.
 
@@ -343,8 +610,10 @@ Generate a concise meeting preparation brief in this format:
 - [Question or topic to raise]
 ''';
 
-    try {
-      final response = await http.post(
+    http.Response? response;
+
+    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+      response = await http.post(
         Uri.parse('$_apiBaseUrl/$_model:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -362,43 +631,42 @@ Generate a concise meeting preparation brief in this format:
         }),
       );
 
-      if (response.statusCode != 200) {
-        session.log('Failed to generate meeting context: ${response.statusCode}',
-            level: LogLevel.error);
-        return null;
+      if (response.statusCode == 200) {
+        break;
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final candidates = data['candidates'] as List<dynamic>?;
+      if (response.statusCode == 429 || response.statusCode == 503) {
+        if (attempt < _maxRetries - 1) {
+          final delaySeconds = 2 << attempt;
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
+        }
+        throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
+      }
 
-      if (candidates == null || candidates.isEmpty) return null;
+      throw Exception('Gemini API error: ${response.statusCode}');
+    }
 
-      final content = candidates.first['content'] as Map<String, dynamic>;
-      final parts = content['parts'] as List<dynamic>;
-      final contextBrief = parts.first['text'] as String;
-
-      // Save to event
-      await CalendarService.updateEventContext(
-        session,
-        eventId,
-        contextBrief: contextBrief,
-        relatedEmailIds: relatedEmails.map((e) => e.gmailId).toList(),
-      );
-
-      return contextBrief;
-    } catch (e) {
-      session.log('Error generating meeting context: $e', level: LogLevel.error);
+    if (response == null || response.statusCode != 200) {
       return null;
     }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final candidates = data['candidates'] as List<dynamic>?;
+
+    if (candidates == null || candidates.isEmpty) return null;
+
+    final content = candidates.first['content'] as Map<String, dynamic>;
+    final parts = content['parts'] as List<dynamic>;
+    return parts.first['text'] as String;
   }
 
-  /// Get daily email digest
+  /// Get daily email digest with multi-model fallback
   static Future<String?> generateDailyDigest(
     Session session,
     int userId,
   ) async {
     final apiKey = session.serverpod.getPassword('geminiApiKey');
-    if (apiKey == null) return null;
 
     // Get today's important emails
     final now = DateTime.now();
@@ -438,10 +706,80 @@ Generate a concise meeting preparation brief in this format:
   ${e.location ?? ''}
 ''').join('\n');
 
+    String? digest;
+
+    // Check if Gemini is rate limited, try Groq first if so
+    if (MultiModelService.isProviderRateLimited(ModelProvider.gemini)) {
+      session.log('Gemini rate limited, trying Groq for daily digest');
+      digest = await GroqService.generateDailyDigest(
+        session,
+        emailSummaries,
+        eventSummaries,
+        todayEmails.length,
+        actionableEmails.length,
+      );
+      if (digest != null) {
+        MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+      }
+    }
+
+    // Try Gemini if we don't have digest yet
+    if (digest == null && apiKey != null) {
+      try {
+        digest = await _generateDailyDigestWithGemini(
+          session,
+          apiKey,
+          emailSummaries,
+          eventSummaries,
+          todayEmails.length,
+          actionableEmails.length,
+        );
+        if (digest != null) {
+          MultiModelService.clearProviderRateLimit(ModelProvider.gemini);
+        }
+      } catch (e) {
+        final isRateLimit = e.toString().contains('429') ||
+            e.toString().contains('rate limit') ||
+            e.toString().contains('quota');
+
+        if (isRateLimit) {
+          session.log('Gemini rate limited, falling back to Groq for daily digest',
+              level: LogLevel.warning);
+          MultiModelService.markProviderRateLimited(ModelProvider.gemini);
+
+          digest = await GroqService.generateDailyDigest(
+            session,
+            emailSummaries,
+            eventSummaries,
+            todayEmails.length,
+            actionableEmails.length,
+          );
+
+          if (digest != null) {
+            MultiModelService.clearProviderRateLimit(ModelProvider.groq);
+          }
+        } else {
+          session.log('Error generating daily digest: $e', level: LogLevel.error);
+        }
+      }
+    }
+
+    return digest;
+  }
+
+  /// Generate daily digest using Gemini API
+  static Future<String?> _generateDailyDigestWithGemini(
+    Session session,
+    String apiKey,
+    String emailSummaries,
+    String eventSummaries,
+    int totalEmails,
+    int actionableCount,
+  ) async {
     final prompt = '''
 Generate a brief, scannable daily email digest.
 
-TODAY'S EMAILS (${todayEmails.length} total, ${actionableEmails.length} require action):
+TODAY'S EMAILS ($totalEmails total, $actionableCount require action):
 $emailSummaries
 
 TODAY'S CALENDAR:
@@ -456,8 +794,10 @@ Create a digest with:
 Keep it under 300 words, use bullet points, be scannable.
 ''';
 
-    try {
-      final response = await http.post(
+    http.Response? response;
+
+    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+      response = await http.post(
         Uri.parse('$_apiBaseUrl/$_model:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -475,20 +815,33 @@ Keep it under 300 words, use bullet points, be scannable.
         }),
       );
 
-      if (response.statusCode != 200) return null;
+      if (response.statusCode == 200) {
+        break;
+      }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final candidates = data['candidates'] as List<dynamic>?;
+      if (response.statusCode == 429 || response.statusCode == 503) {
+        if (attempt < _maxRetries - 1) {
+          final delaySeconds = 2 << attempt;
+          await Future.delayed(Duration(seconds: delaySeconds));
+          continue;
+        }
+        throw Exception('Gemini API rate limited (429) after $_maxRetries retries');
+      }
 
-      if (candidates == null || candidates.isEmpty) return null;
+      throw Exception('Gemini API error: ${response.statusCode}');
+    }
 
-      final content = candidates.first['content'] as Map<String, dynamic>;
-      final parts = content['parts'] as List<dynamic>;
-
-      return parts.first['text'] as String;
-    } catch (e) {
-      session.log('Error generating daily digest: $e', level: LogLevel.error);
+    if (response == null || response.statusCode != 200) {
       return null;
     }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final candidates = data['candidates'] as List<dynamic>?;
+
+    if (candidates == null || candidates.isEmpty) return null;
+
+    final content = candidates.first['content'] as Map<String, dynamic>;
+    final parts = content['parts'] as List<dynamic>;
+    return parts.first['text'] as String;
   }
 }
