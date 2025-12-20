@@ -10,7 +10,7 @@
 # NOTE: For physical device testing, publicHost must be your computer's IP
 apiServer:
   port: 8080
-  publicHost: 10.247.221.69
+  publicHost: 10.22.225.69
   publicPort: 8080
   publicScheme: http
 

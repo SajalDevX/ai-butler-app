@@ -61,7 +61,7 @@ Future<void> main() async {
   // Initialize the Serverpod client
   // For physical devices: Update this IP to your computer's local IP
   // Find it with: hostname -I | awk '{print $1}'
-  const localNetworkIp = '10.247.221.69'; // <-- UPDATE THIS FOR YOUR NETWORK
+  const localNetworkIp = '10.22.225.69'; // <-- UPDATE THIS FOR YOUR NETWORK
 
   // Priority: 1) SERVER_URL env var, 2) localNetworkIp for physical, 3) localhost helper for emulator
   const serverUrlFromEnv = String.fromEnvironment('SERVER_URL');

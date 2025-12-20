@@ -234,17 +234,17 @@ class _BouncyButtonState extends State<BouncyButton>
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(begin: 1.0, end: 0.9)
-            .chain(CurvedTween(curve: Curves.easeIn)),
+            .chain(CurveTween(curve: Curves.easeIn)),
         weight: 40,
       ),
       TweenSequenceItem(
         tween: Tween<double>(begin: 0.9, end: 1.1)
-            .chain(CurvedTween(curve: Curves.easeOut)),
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
         tween: Tween<double>(begin: 1.1, end: 1.0)
-            .chain(CurvedTween(curve: Curves.elasticOut)),
+            .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 30,
       ),
     ]).animate(_controller);

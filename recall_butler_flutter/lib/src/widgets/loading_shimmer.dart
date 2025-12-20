@@ -2,6 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../theme/colors.dart';
 
+/// Simple shimmer widget for loading states
+class LoadingShimmer extends StatelessWidget {
+  final double width;
+  final double height;
+  final double? borderRadius;
+
+  const LoadingShimmer({
+    super.key,
+    required this.width,
+    required this.height,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surfaceLight,
+      highlightColor: Colors.white.withOpacity(0.8),
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius ?? 4),
+        ),
+      ),
+    );
+  }
+}
+
 /// Beautiful shimmer loading widgets for different content types
 class LoadingShimmers {
   /// Email card shimmer

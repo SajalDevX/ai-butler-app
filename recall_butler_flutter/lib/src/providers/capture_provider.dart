@@ -357,3 +357,19 @@ final remindersProvider = FutureProvider<List<Capture>>((ref) async {
   final client = ref.watch(clientProvider);
   return client.capture.getReminders();
 });
+
+/// Provider for today's captures
+final todaysCapturesProvider = FutureProvider<List<Capture>>((ref) async {
+  final client = ref.watch(clientProvider);
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day);
+  final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+  final allCaptures = await client.capture.getCaptures(limit: 100);
+
+  // Filter captures created today
+  return allCaptures.where((capture) {
+    return capture.createdAt.isAfter(startOfDay) &&
+           capture.createdAt.isBefore(endOfDay);
+  }).toList();
+});
