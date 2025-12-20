@@ -20,6 +20,24 @@ class ActionsState {
     this.selectedType,
   });
 
+  /// Get high priority actions
+  List<Action> get highPriorityActions {
+    return actions.where((action) => action.priority == 'high').toList();
+  }
+
+  /// Get upcoming actions (not today, not overdue)
+  List<Action> get upcomingActions {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    return actions.where((action) {
+      if (action.dueAt == null) return true;
+      // Not overdue and not today
+      return action.dueAt!.isAfter(tomorrow);
+    }).toList();
+  }
+
   ActionsState copyWith({
     List<Action>? actions,
     List<Action>? todayActions,

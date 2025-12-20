@@ -123,16 +123,56 @@ The server will start on:
 - Insights: `http://localhost:8081`
 - Web Server: `http://localhost:8082`
 
+### Configure Firebase (Required)
+
+The app uses Firebase for push notifications. You need to set up Firebase before running:
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Add Android/iOS apps to your Firebase project
+3. Download and place the configuration files:
+   - Android: `google-services.json` in `recall_butler_flutter/android/app/`
+   - iOS: `GoogleService-Info.plist` in `recall_butler_flutter/ios/Runner/`
+4. Install FlutterFire CLI and generate configuration:
+
+```bash
+dart pub global activate flutterfire_cli
+cd recall_butler_flutter
+flutterfire configure
+```
+
 ### Run the Flutter App
+
+**Important:** Make sure the Serverpod server is running first (see "Start the Server" above).
 
 ```bash
 cd recall_butler_flutter
 flutter run
 ```
 
+Select your target device when prompted:
+- `1` for Android emulator
+- `2` for connected physical device
+- `3` for Chrome (web - limited functionality)
+
 ### For Physical Device Testing
 
-1. Update `recall_butler_server/config/development.yaml`:
+When testing on a physical device, update the server IP address:
+
+1. Find your computer's local IP address:
+
+```bash
+# Linux/macOS
+hostname -I | awk '{print $1}'
+# Or check your network settings
+```
+
+2. Update `recall_butler_flutter/lib/main.dart` **line 64**:
+
+```dart
+const localNetworkIp = 'YOUR_COMPUTER_IP'; // e.g., '192.168.1.100'
+```
+
+3. (Optional) Update `recall_butler_server/config/development.yaml`:
 
 ```yaml
 apiServer:
@@ -142,7 +182,11 @@ apiServer:
   publicScheme: http
 ```
 
-2. Update the client URL in `recall_butler_flutter/lib/main.dart` to match.
+4. Rebuild and run the Flutter app:
+
+```bash
+flutter run
+```
 
 ## Configuration
 

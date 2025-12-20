@@ -7,8 +7,12 @@ import '../../providers/dashboard_provider.dart';
 import '../../providers/action_provider.dart';
 import '../../providers/google_auth_provider.dart';
 import '../../theme/colors.dart';
+import '../actions/actions_screen.dart';
 import '../alerts/critical_alerts_screen.dart';
 import '../emails/pending_replies_screen.dart';
+import '../reminders/reminders_screen.dart';
+import '../daily_alerts/daily_alerts_screen.dart';
+import '../high_priority/high_priority_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -329,11 +333,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     switch (action) {
       case 'view_overdue':
-      case 'view_high_priority':
         _showAllActions();
         break;
+      case 'view_high_priority':
+        _showHighPriority();
+        break;
       case 'view_reminders':
-        // Navigate to reminders
+        _showReminders();
         break;
       case 'new_capture':
         // Trigger capture
@@ -341,13 +347,41 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case 'view_digest':
         _showWeeklyDigest();
         break;
+      case 'view_daily_alerts':
+        _showDailyAlerts();
+        break;
     }
   }
 
   void _showAllActions() {
-    // TODO: Navigate to actions screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Actions screen coming soon!')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ActionsScreen(),
+      ),
+    );
+  }
+
+  void _showReminders() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const RemindersScreen(),
+      ),
+    );
+  }
+
+  void _showDailyAlerts() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const DailyAlertsScreen(),
+      ),
+    );
+  }
+
+  void _showHighPriority() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const HighPriorityScreen(),
+      ),
     );
   }
 
