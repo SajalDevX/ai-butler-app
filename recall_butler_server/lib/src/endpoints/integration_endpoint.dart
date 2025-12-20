@@ -109,8 +109,67 @@ class IntegrationEndpoint extends Endpoint {
 
     return EmailDraftResult(
       success: true,
-      draftText: draft,
+      draftReply: draft,
+      tone: tone,
     );
+  }
+
+  /// Generate email draft with different tones by gmailId
+  Future<EmailDraftResult> generateEmailDraft(
+    Session session,
+    String gmailId,
+    String tone,
+  ) async {
+    try {
+      final userId = await _getUserId(session);
+
+      // Fetch the EmailSummary by gmailId
+      final email = await EmailSummary.db.findFirstRow(
+        session,
+        where: (t) => t.gmailId.equals(gmailId) & t.userId.equals(userId),
+      );
+
+      if (email == null) {
+        return EmailDraftResult(
+          success: false,
+          error: 'Email not found with gmailId: $gmailId',
+        );
+      }
+
+      // Validate tone
+      const validTones = ['professional', 'casual', 'formal', 'friendly'];
+      if (!validTones.contains(tone.toLowerCase())) {
+        return EmailDraftResult(
+          success: false,
+          error: 'Invalid tone. Must be one of: ${validTones.join(', ')}',
+        );
+      }
+
+      // Generate draft reply using EmailAIService
+      final draft = await EmailAIService.generateDraftReply(
+        session,
+        email.id!,
+        tone: tone,
+      );
+
+      if (draft == null) {
+        return EmailDraftResult(
+          success: false,
+          error: 'Failed to generate draft reply',
+        );
+      }
+
+      return EmailDraftResult(
+        success: true,
+        draftReply: draft,
+        tone: tone,
+      );
+    } catch (e) {
+      return EmailDraftResult(
+        success: false,
+        error: 'Error generating draft: ${e.toString()}',
+      );
+    }
   }
 
   /// Create a Gmail draft from generated text
@@ -135,6 +194,66 @@ class IntegrationEndpoint extends Endpoint {
     );
 
     return draftId != null;
+  }
+
+  /// Send email reply via Gmail API
+  Future<EmailSendResult> sendEmailReply(
+    Session session,
+    String gmailId,
+    String replyText,
+  ) async {
+    final userId = await _getUserId(session);
+
+    // Fetch the EmailSummary by gmailId
+    final email = await EmailSummary.db.findFirstRow(
+      session,
+      where: (t) => t.gmailId.equals(gmailId) & t.userId.equals(userId),
+    );
+
+    if (email == null) {
+      return EmailSendResult(
+        success: false,
+        error: 'Email not found or access denied',
+      );
+    }
+
+    // Get user's GoogleToken to verify Gmail access
+    final googleToken = await GoogleToken.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(userId),
+    );
+
+    if (googleToken == null || !googleToken.gmailEnabled) {
+      return EmailSendResult(
+        success: false,
+        error: 'Gmail not enabled for this user',
+      );
+    }
+
+    // Use GmailService to send the reply
+    final sentMessageId = await GmailService.sendReply(
+      session,
+      userId,
+      gmailId,
+      replyText,
+    );
+
+    if (sentMessageId == null) {
+      return EmailSendResult(
+        success: false,
+        error: 'Failed to send email reply',
+      );
+    }
+
+    // Mark the email as replied/archived in the database
+    email.isArchived = true;
+    email.updatedAt = DateTime.now();
+    await EmailSummary.db.updateRow(session, email);
+
+    return EmailSendResult(
+      success: true,
+      messageId: sentMessageId,
+    );
   }
 
   /// Trigger manual email sync
@@ -343,6 +462,91 @@ class IntegrationEndpoint extends Endpoint {
       lastCalendarSync: googleToken?.lastCalendarSync,
     );
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // EMAIL SEND/SCHEDULE OPERATIONS
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Schedule email reply to be sent at a specific time
+  Future<EmailSendResult> scheduleEmailReply(
+    Session session,
+    String gmailId,
+    String replyText,
+    DateTime scheduledTime,
+  ) async {
+    final userId = await _getUserId(session);
+
+    // Validate that scheduled time is in the future
+    if (scheduledTime.isBefore(DateTime.now())) {
+      return EmailSendResult(
+        success: false,
+        error: 'Scheduled time must be in the future',
+      );
+    }
+
+    // Validate inputs
+    if (replyText.trim().isEmpty) {
+      return EmailSendResult(
+        success: false,
+        error: 'Reply text cannot be empty',
+      );
+    }
+
+    // Verify the email exists and belongs to this user
+    final email = await EmailSummary.db.findFirstRow(
+      session,
+      where: (t) => t.gmailId.equals(gmailId) & t.userId.equals(userId),
+    );
+
+    if (email == null) {
+      return EmailSendResult(
+        success: false,
+        error: 'Email not found',
+      );
+    }
+
+    try {
+      // Create task data for the scheduled email
+      final task = ScheduledEmailTask(
+        userId: userId,
+        gmailId: gmailId,
+        replyText: replyText,
+        scheduledTime: scheduledTime,
+      );
+
+      // Calculate delay until scheduled time
+      final delay = scheduledTime.difference(DateTime.now());
+
+      // Schedule the future call
+      await session.serverpod.futureCallWithDelay(
+        'scheduledEmail',
+        task,
+        delay,
+      );
+
+      session.log(
+        'Email scheduled for user $userId at $scheduledTime (in ${delay.inMinutes} minutes)',
+      );
+
+      return EmailSendResult(
+        success: true,
+        scheduledTime: scheduledTime,
+      );
+    } catch (e, stackTrace) {
+      session.log(
+        'Failed to schedule email: $e\n$stackTrace',
+        level: LogLevel.error,
+      );
+      return EmailSendResult(
+        success: false,
+        error: 'Failed to schedule email: $e',
+      );
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // HELPER METHODS
+  // ═══════════════════════════════════════════════════════════════
 
   /// Helper to get user ID from session
   Future<int> _getUserId(Session session) async {

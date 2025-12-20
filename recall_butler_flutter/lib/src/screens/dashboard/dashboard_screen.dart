@@ -5,7 +5,10 @@ import 'package:iconsax/iconsax.dart';
 
 import '../../providers/dashboard_provider.dart';
 import '../../providers/action_provider.dart';
+import '../../providers/google_auth_provider.dart';
 import '../../theme/colors.dart';
+import '../alerts/critical_alerts_screen.dart';
+import '../emails/pending_replies_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -39,7 +42,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           slivers: [
             // App Bar with greeting
             SliverAppBar(
-              expandedHeight: 140,
+              expandedHeight: 160,
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
@@ -49,7 +52,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -61,14 +64,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             dashboardState.morningBriefing?.aiSummary ??
                                 'Your AI butler is ready to help.',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
                             ),
-                            maxLines: 2,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -79,6 +83,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 title: const Text('Dashboard'),
                 centerTitle: false,
               ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Iconsax.danger),
+                  onPressed: _openCriticalAlerts,
+                  tooltip: 'Critical Alerts',
+                ),
+              ],
             ),
 
             // Stats Grid
@@ -110,6 +121,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: _WeeklyChart(dailyCounts: dashboardState.stats!.dailyCounts),
                 ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
               ),
+
+            // Pending Replies Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _PendingRepliesWidget(
+                  onTap: _openPendingReplies,
+                ),
+              ).animate().fadeIn(duration: 400.ms, delay: 150.ms),
+            ),
 
             // Butler Suggestions
             if (dashboardState.stats != null &&
@@ -284,6 +305,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+
+  void _openCriticalAlerts() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CriticalAlertsScreen(),
+      ),
+    );
+  }
+
+  void _openPendingReplies() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PendingRepliesScreen(),
+      ),
+    );
   }
 
   void _handleSuggestionTap(Map<String, dynamic> suggestion) {
@@ -878,6 +915,144 @@ class _DigestStatCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PendingRepliesWidget extends ConsumerWidget {
+  final VoidCallback onTap;
+
+  const _PendingRepliesWidget({required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(googleAuthProvider);
+    final pendingRepliesAsync = ref.watch(pendingRepliesProvider);
+
+    if (!authState.isAuthenticated || !authState.gmailEnabled) {
+      return const SizedBox.shrink();
+    }
+
+    return pendingRepliesAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (emails) {
+        if (emails.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Card(
+            color: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: AppColors.primary.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Iconsax.message_edit,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pending Replies',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${emails.length} ${emails.length == 1 ? 'email needs' : 'emails need'} your response',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${emails.length}',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Iconsax.cpu,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'AI has drafted replies ready for your review',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Iconsax.arrow_right_3,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

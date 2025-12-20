@@ -25,20 +25,22 @@ import 'package:recall_butler_client/src/protocol/weekly_digest.dart' as _i11;
 import 'package:recall_butler_client/src/protocol/email_summary.dart' as _i12;
 import 'package:recall_butler_client/src/protocol/email_draft_result.dart'
     as _i13;
-import 'package:recall_butler_client/src/protocol/sync_result.dart' as _i14;
+import 'package:recall_butler_client/src/protocol/email_send_result.dart'
+    as _i14;
+import 'package:recall_butler_client/src/protocol/sync_result.dart' as _i15;
 import 'package:recall_butler_client/src/protocol/calendar_event_cache.dart'
-    as _i15;
-import 'package:recall_butler_client/src/protocol/meeting_prep_result.dart'
     as _i16;
-import 'package:recall_butler_client/src/protocol/integration_dashboard.dart'
+import 'package:recall_butler_client/src/protocol/meeting_prep_result.dart'
     as _i17;
-import 'package:recall_butler_client/src/protocol/notification_log.dart'
+import 'package:recall_butler_client/src/protocol/integration_dashboard.dart'
     as _i18;
-import 'package:recall_butler_client/src/protocol/search_result.dart' as _i19;
-import 'package:recall_butler_client/src/protocol/search_request.dart' as _i20;
-import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i21;
-import 'package:recall_butler_client/src/protocol/greeting.dart' as _i22;
-import 'protocol.dart' as _i23;
+import 'package:recall_butler_client/src/protocol/notification_log.dart'
+    as _i19;
+import 'package:recall_butler_client/src/protocol/search_result.dart' as _i20;
+import 'package:recall_butler_client/src/protocol/search_request.dart' as _i21;
+import 'package:recall_butler_client/src/protocol/user_preference.dart' as _i22;
+import 'package:recall_butler_client/src/protocol/greeting.dart' as _i23;
+import 'protocol.dart' as _i24;
 
 /// {@category Endpoint}
 class EndpointAction extends _i1.EndpointRef {
@@ -585,6 +587,20 @@ class EndpointIntegration extends _i1.EndpointRef {
         },
       );
 
+  /// Generate email draft with different tones by gmailId
+  _i2.Future<_i13.EmailDraftResult> generateEmailDraft(
+    String gmailId,
+    String tone,
+  ) =>
+      caller.callServerEndpoint<_i13.EmailDraftResult>(
+        'integration',
+        'generateEmailDraft',
+        {
+          'gmailId': gmailId,
+          'tone': tone,
+        },
+      );
+
   /// Create a Gmail draft from generated text
   _i2.Future<bool> createGmailDraft(
     int emailId,
@@ -599,9 +615,23 @@ class EndpointIntegration extends _i1.EndpointRef {
         },
       );
 
+  /// Send email reply via Gmail API
+  _i2.Future<_i14.EmailSendResult> sendEmailReply(
+    String gmailId,
+    String replyText,
+  ) =>
+      caller.callServerEndpoint<_i14.EmailSendResult>(
+        'integration',
+        'sendEmailReply',
+        {
+          'gmailId': gmailId,
+          'replyText': replyText,
+        },
+      );
+
   /// Trigger manual email sync
-  _i2.Future<_i14.SyncResult> syncEmails({required bool fullSync}) =>
-      caller.callServerEndpoint<_i14.SyncResult>(
+  _i2.Future<_i15.SyncResult> syncEmails({required bool fullSync}) =>
+      caller.callServerEndpoint<_i15.SyncResult>(
         'integration',
         'syncEmails',
         {'fullSync': fullSync},
@@ -615,11 +645,11 @@ class EndpointIntegration extends _i1.EndpointRef {
       );
 
   /// Get upcoming calendar events
-  _i2.Future<List<_i15.CalendarEventCache>> getUpcomingEvents({
+  _i2.Future<List<_i16.CalendarEventCache>> getUpcomingEvents({
     required int hoursAhead,
     int? limit,
   }) =>
-      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+      caller.callServerEndpoint<List<_i16.CalendarEventCache>>(
         'integration',
         'getUpcomingEvents',
         {
@@ -629,19 +659,19 @@ class EndpointIntegration extends _i1.EndpointRef {
       );
 
   /// Get today's calendar events
-  _i2.Future<List<_i15.CalendarEventCache>> getTodayEvents() =>
-      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+  _i2.Future<List<_i16.CalendarEventCache>> getTodayEvents() =>
+      caller.callServerEndpoint<List<_i16.CalendarEventCache>>(
         'integration',
         'getTodayEvents',
         {},
       );
 
   /// Get events for a date range
-  _i2.Future<List<_i15.CalendarEventCache>> getEventsByRange(
+  _i2.Future<List<_i16.CalendarEventCache>> getEventsByRange(
     DateTime startDate,
     DateTime endDate,
   ) =>
-      caller.callServerEndpoint<List<_i15.CalendarEventCache>>(
+      caller.callServerEndpoint<List<_i16.CalendarEventCache>>(
         'integration',
         'getEventsByRange',
         {
@@ -651,35 +681,51 @@ class EndpointIntegration extends _i1.EndpointRef {
       );
 
   /// Get a single event by ID
-  _i2.Future<_i15.CalendarEventCache?> getEvent(int eventId) =>
-      caller.callServerEndpoint<_i15.CalendarEventCache?>(
+  _i2.Future<_i16.CalendarEventCache?> getEvent(int eventId) =>
+      caller.callServerEndpoint<_i16.CalendarEventCache?>(
         'integration',
         'getEvent',
         {'eventId': eventId},
       );
 
   /// Generate meeting preparation brief
-  _i2.Future<_i16.MeetingPrepResult> generateMeetingPrep(int eventId) =>
-      caller.callServerEndpoint<_i16.MeetingPrepResult>(
+  _i2.Future<_i17.MeetingPrepResult> generateMeetingPrep(int eventId) =>
+      caller.callServerEndpoint<_i17.MeetingPrepResult>(
         'integration',
         'generateMeetingPrep',
         {'eventId': eventId},
       );
 
   /// Trigger manual calendar sync
-  _i2.Future<_i14.SyncResult> syncCalendar({required int daysAhead}) =>
-      caller.callServerEndpoint<_i14.SyncResult>(
+  _i2.Future<_i15.SyncResult> syncCalendar({required int daysAhead}) =>
+      caller.callServerEndpoint<_i15.SyncResult>(
         'integration',
         'syncCalendar',
         {'daysAhead': daysAhead},
       );
 
   /// Get integrated dashboard data
-  _i2.Future<_i17.IntegrationDashboard> getDashboard() =>
-      caller.callServerEndpoint<_i17.IntegrationDashboard>(
+  _i2.Future<_i18.IntegrationDashboard> getDashboard() =>
+      caller.callServerEndpoint<_i18.IntegrationDashboard>(
         'integration',
         'getDashboard',
         {},
+      );
+
+  /// Schedule email reply to be sent at a specific time
+  _i2.Future<_i14.EmailSendResult> scheduleEmailReply(
+    String gmailId,
+    String replyText,
+    DateTime scheduledTime,
+  ) =>
+      caller.callServerEndpoint<_i14.EmailSendResult>(
+        'integration',
+        'scheduleEmailReply',
+        {
+          'gmailId': gmailId,
+          'replyText': replyText,
+          'scheduledTime': scheduledTime,
+        },
       );
 }
 
@@ -716,9 +762,9 @@ class EndpointNotification extends _i1.EndpointRef {
       );
 
   /// Get notification history for the user
-  _i2.Future<List<_i18.NotificationLog>> getNotificationHistory(
+  _i2.Future<List<_i19.NotificationLog>> getNotificationHistory(
           {required int limit}) =>
-      caller.callServerEndpoint<List<_i18.NotificationLog>>(
+      caller.callServerEndpoint<List<_i19.NotificationLog>>(
         'notification',
         'getNotificationHistory',
         {'limit': limit},
@@ -763,8 +809,8 @@ class EndpointSearch extends _i1.EndpointRef {
   String get name => 'search';
 
   /// Perform semantic search across captures
-  _i2.Future<_i19.SearchResult> search(_i20.SearchRequest request) =>
-      caller.callServerEndpoint<_i19.SearchResult>(
+  _i2.Future<_i20.SearchResult> search(_i21.SearchRequest request) =>
+      caller.callServerEndpoint<_i20.SearchResult>(
         'search',
         'search',
         {'request': request},
@@ -809,15 +855,15 @@ class EndpointUserPreference extends _i1.EndpointRef {
   String get name => 'userPreference';
 
   /// Get user preferences, creating default if not exists
-  _i2.Future<_i21.UserPreference> getPreferences() =>
-      caller.callServerEndpoint<_i21.UserPreference>(
+  _i2.Future<_i22.UserPreference> getPreferences() =>
+      caller.callServerEndpoint<_i22.UserPreference>(
         'userPreference',
         'getPreferences',
         {},
       );
 
   /// Update user preferences
-  _i2.Future<_i21.UserPreference> updatePreferences({
+  _i2.Future<_i22.UserPreference> updatePreferences({
     String? timezone,
     String? notificationTime,
     bool? overlayEnabled,
@@ -825,7 +871,7 @@ class EndpointUserPreference extends _i1.EndpointRef {
     bool? proactiveRemindersEnabled,
     String? theme,
   }) =>
-      caller.callServerEndpoint<_i21.UserPreference>(
+      caller.callServerEndpoint<_i22.UserPreference>(
         'userPreference',
         'updatePreferences',
         {
@@ -856,8 +902,8 @@ class EndpointGreeting extends _i1.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i2.Future<_i22.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i22.Greeting>(
+  _i2.Future<_i23.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i23.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -880,7 +926,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
           host,
-          _i23.Protocol(),
+          _i24.Protocol(),
           securityContext: securityContext,
           authenticationKeyManager: authenticationKeyManager,
           streamingConnectionTimeout: streamingConnectionTimeout,

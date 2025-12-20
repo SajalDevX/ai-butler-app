@@ -3,4 +3,5 @@ class: EmailDraftResult
 fields:
   success: bool
   error: String?
-  draftText: String?
+  draftReply: String?
+  tone: String?

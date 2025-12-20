@@ -29,20 +29,22 @@ import 'package:recall_butler_server/src/generated/weekly_digest.dart' as _i12;
 import 'package:recall_butler_server/src/generated/email_summary.dart' as _i13;
 import 'package:recall_butler_server/src/generated/email_draft_result.dart'
     as _i14;
-import 'package:recall_butler_server/src/generated/sync_result.dart' as _i15;
+import 'package:recall_butler_server/src/generated/email_send_result.dart'
+    as _i15;
+import 'package:recall_butler_server/src/generated/sync_result.dart' as _i16;
 import 'package:recall_butler_server/src/generated/calendar_event_cache.dart'
-    as _i16;
-import 'package:recall_butler_server/src/generated/meeting_prep_result.dart'
     as _i17;
-import 'package:recall_butler_server/src/generated/integration_dashboard.dart'
+import 'package:recall_butler_server/src/generated/meeting_prep_result.dart'
     as _i18;
-import 'package:recall_butler_server/src/generated/notification_log.dart'
+import 'package:recall_butler_server/src/generated/integration_dashboard.dart'
     as _i19;
-import 'package:recall_butler_server/src/generated/search_result.dart' as _i20;
-import 'package:recall_butler_server/src/generated/search_request.dart' as _i21;
+import 'package:recall_butler_server/src/generated/notification_log.dart'
+    as _i20;
+import 'package:recall_butler_server/src/generated/search_result.dart' as _i21;
+import 'package:recall_butler_server/src/generated/search_request.dart' as _i22;
 import 'package:recall_butler_server/src/generated/user_preference.dart'
-    as _i22;
-import 'package:recall_butler_server/src/generated/greeting.dart' as _i23;
+    as _i23;
+import 'package:recall_butler_server/src/generated/greeting.dart' as _i24;
 import 'package:recall_butler_server/src/generated/protocol.dart';
 import 'package:recall_butler_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1633,6 +1635,39 @@ class _IntegrationEndpoint {
     });
   }
 
+  _i3.Future<_i14.EmailDraftResult> generateEmailDraft(
+    _i1.TestSessionBuilder sessionBuilder,
+    String gmailId,
+    String tone,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+        endpoint: 'integration',
+        method: 'generateEmailDraft',
+      );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'integration',
+          methodName: 'generateEmailDraft',
+          parameters: _i1.testObjectToJson({
+            'gmailId': gmailId,
+            'tone': tone,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _i3.Future<_i14.EmailDraftResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<bool> createGmailDraft(
     _i1.TestSessionBuilder sessionBuilder,
     int emailId,
@@ -1666,7 +1701,40 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<_i15.SyncResult> syncEmails(
+  _i3.Future<_i15.EmailSendResult> sendEmailReply(
+    _i1.TestSessionBuilder sessionBuilder,
+    String gmailId,
+    String replyText,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+        endpoint: 'integration',
+        method: 'sendEmailReply',
+      );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'integration',
+          methodName: 'sendEmailReply',
+          parameters: _i1.testObjectToJson({
+            'gmailId': gmailId,
+            'replyText': replyText,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _i3.Future<_i15.EmailSendResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i16.SyncResult> syncEmails(
     _i1.TestSessionBuilder sessionBuilder, {
     required bool fullSync,
   }) async {
@@ -1687,7 +1755,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i15.SyncResult>);
+        ) as _i3.Future<_i16.SyncResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1722,7 +1790,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<List<_i16.CalendarEventCache>> getUpcomingEvents(
+  _i3.Future<List<_i17.CalendarEventCache>> getUpcomingEvents(
     _i1.TestSessionBuilder sessionBuilder, {
     required int hoursAhead,
     int? limit,
@@ -1747,7 +1815,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<List<_i16.CalendarEventCache>>);
+        ) as _i3.Future<List<_i17.CalendarEventCache>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1755,7 +1823,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<List<_i16.CalendarEventCache>> getTodayEvents(
+  _i3.Future<List<_i17.CalendarEventCache>> getTodayEvents(
       _i1.TestSessionBuilder sessionBuilder) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1774,7 +1842,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<List<_i16.CalendarEventCache>>);
+        ) as _i3.Future<List<_i17.CalendarEventCache>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1782,7 +1850,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<List<_i16.CalendarEventCache>> getEventsByRange(
+  _i3.Future<List<_i17.CalendarEventCache>> getEventsByRange(
     _i1.TestSessionBuilder sessionBuilder,
     DateTime startDate,
     DateTime endDate,
@@ -1807,7 +1875,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<List<_i16.CalendarEventCache>>);
+        ) as _i3.Future<List<_i17.CalendarEventCache>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1815,7 +1883,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<_i16.CalendarEventCache?> getEvent(
+  _i3.Future<_i17.CalendarEventCache?> getEvent(
     _i1.TestSessionBuilder sessionBuilder,
     int eventId,
   ) async {
@@ -1836,7 +1904,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i16.CalendarEventCache?>);
+        ) as _i3.Future<_i17.CalendarEventCache?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1844,7 +1912,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<_i17.MeetingPrepResult> generateMeetingPrep(
+  _i3.Future<_i18.MeetingPrepResult> generateMeetingPrep(
     _i1.TestSessionBuilder sessionBuilder,
     int eventId,
   ) async {
@@ -1865,7 +1933,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i17.MeetingPrepResult>);
+        ) as _i3.Future<_i18.MeetingPrepResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1873,7 +1941,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<_i15.SyncResult> syncCalendar(
+  _i3.Future<_i16.SyncResult> syncCalendar(
     _i1.TestSessionBuilder sessionBuilder, {
     required int daysAhead,
   }) async {
@@ -1894,7 +1962,7 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i15.SyncResult>);
+        ) as _i3.Future<_i16.SyncResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1902,7 +1970,7 @@ class _IntegrationEndpoint {
     });
   }
 
-  _i3.Future<_i18.IntegrationDashboard> getDashboard(
+  _i3.Future<_i19.IntegrationDashboard> getDashboard(
       _i1.TestSessionBuilder sessionBuilder) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1921,7 +1989,42 @@ class _IntegrationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i18.IntegrationDashboard>);
+        ) as _i3.Future<_i19.IntegrationDashboard>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i15.EmailSendResult> scheduleEmailReply(
+    _i1.TestSessionBuilder sessionBuilder,
+    String gmailId,
+    String replyText,
+    DateTime scheduledTime,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+        endpoint: 'integration',
+        method: 'scheduleEmailReply',
+      );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'integration',
+          methodName: 'scheduleEmailReply',
+          parameters: _i1.testObjectToJson({
+            'gmailId': gmailId,
+            'replyText': replyText,
+            'scheduledTime': scheduledTime,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue = await (_localCallContext.method.call(
+          _localUniqueSession,
+          _localCallContext.arguments,
+        ) as _i3.Future<_i15.EmailSendResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2004,7 +2107,7 @@ class _NotificationEndpoint {
     });
   }
 
-  _i3.Future<List<_i19.NotificationLog>> getNotificationHistory(
+  _i3.Future<List<_i20.NotificationLog>> getNotificationHistory(
     _i1.TestSessionBuilder sessionBuilder, {
     required int limit,
   }) async {
@@ -2025,7 +2128,7 @@ class _NotificationEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<List<_i19.NotificationLog>>);
+        ) as _i3.Future<List<_i20.NotificationLog>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2154,9 +2257,9 @@ class _SearchEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i20.SearchResult> search(
+  _i3.Future<_i21.SearchResult> search(
     _i1.TestSessionBuilder sessionBuilder,
-    _i21.SearchRequest request,
+    _i22.SearchRequest request,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2175,7 +2278,7 @@ class _SearchEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i20.SearchResult>);
+        ) as _i3.Future<_i21.SearchResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2283,7 +2386,7 @@ class _UserPreferenceEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i22.UserPreference> getPreferences(
+  _i3.Future<_i23.UserPreference> getPreferences(
       _i1.TestSessionBuilder sessionBuilder) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -2302,7 +2405,7 @@ class _UserPreferenceEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i22.UserPreference>);
+        ) as _i3.Future<_i23.UserPreference>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2310,7 +2413,7 @@ class _UserPreferenceEndpoint {
     });
   }
 
-  _i3.Future<_i22.UserPreference> updatePreferences(
+  _i3.Future<_i23.UserPreference> updatePreferences(
     _i1.TestSessionBuilder sessionBuilder, {
     String? timezone,
     String? notificationTime,
@@ -2343,7 +2446,7 @@ class _UserPreferenceEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i22.UserPreference>);
+        ) as _i3.Future<_i23.UserPreference>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -2388,7 +2491,7 @@ class _GreetingEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i23.Greeting> hello(
+  _i3.Future<_i24.Greeting> hello(
     _i1.TestSessionBuilder sessionBuilder,
     String name,
   ) async {
@@ -2409,7 +2512,7 @@ class _GreetingEndpoint {
         var _localReturnValue = await (_localCallContext.method.call(
           _localUniqueSession,
           _localCallContext.arguments,
-        ) as _i3.Future<_i23.Greeting>);
+        ) as _i3.Future<_i24.Greeting>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

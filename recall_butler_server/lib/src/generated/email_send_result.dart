@@ -11,29 +11,32 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 
-/// Result of AI draft generation
-abstract class EmailDraftResult
+/// Result of email send/schedule operation
+abstract class EmailSendResult
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
-  EmailDraftResult._({
+  EmailSendResult._({
     required this.success,
     this.error,
-    this.draftReply,
-    this.tone,
+    this.scheduledTime,
+    this.messageId,
   });
 
-  factory EmailDraftResult({
+  factory EmailSendResult({
     required bool success,
     String? error,
-    String? draftReply,
-    String? tone,
-  }) = _EmailDraftResultImpl;
+    DateTime? scheduledTime,
+    String? messageId,
+  }) = _EmailSendResultImpl;
 
-  factory EmailDraftResult.fromJson(Map<String, dynamic> jsonSerialization) {
-    return EmailDraftResult(
+  factory EmailSendResult.fromJson(Map<String, dynamic> jsonSerialization) {
+    return EmailSendResult(
       success: jsonSerialization['success'] as bool,
       error: jsonSerialization['error'] as String?,
-      draftReply: jsonSerialization['draftReply'] as String?,
-      tone: jsonSerialization['tone'] as String?,
+      scheduledTime: jsonSerialization['scheduledTime'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['scheduledTime']),
+      messageId: jsonSerialization['messageId'] as String?,
     );
   }
 
@@ -41,26 +44,26 @@ abstract class EmailDraftResult
 
   String? error;
 
-  String? draftReply;
+  DateTime? scheduledTime;
 
-  String? tone;
+  String? messageId;
 
-  /// Returns a shallow copy of this [EmailDraftResult]
+  /// Returns a shallow copy of this [EmailSendResult]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  EmailDraftResult copyWith({
+  EmailSendResult copyWith({
     bool? success,
     String? error,
-    String? draftReply,
-    String? tone,
+    DateTime? scheduledTime,
+    String? messageId,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       'success': success,
       if (error != null) 'error': error,
-      if (draftReply != null) 'draftReply': draftReply,
-      if (tone != null) 'tone': tone,
+      if (scheduledTime != null) 'scheduledTime': scheduledTime?.toJson(),
+      if (messageId != null) 'messageId': messageId,
     };
   }
 
@@ -69,8 +72,8 @@ abstract class EmailDraftResult
     return {
       'success': success,
       if (error != null) 'error': error,
-      if (draftReply != null) 'draftReply': draftReply,
-      if (tone != null) 'tone': tone,
+      if (scheduledTime != null) 'scheduledTime': scheduledTime?.toJson(),
+      if (messageId != null) 'messageId': messageId,
     };
   }
 
@@ -82,34 +85,35 @@ abstract class EmailDraftResult
 
 class _Undefined {}
 
-class _EmailDraftResultImpl extends EmailDraftResult {
-  _EmailDraftResultImpl({
+class _EmailSendResultImpl extends EmailSendResult {
+  _EmailSendResultImpl({
     required bool success,
     String? error,
-    String? draftReply,
-    String? tone,
+    DateTime? scheduledTime,
+    String? messageId,
   }) : super._(
           success: success,
           error: error,
-          draftReply: draftReply,
-          tone: tone,
+          scheduledTime: scheduledTime,
+          messageId: messageId,
         );
 
-  /// Returns a shallow copy of this [EmailDraftResult]
+  /// Returns a shallow copy of this [EmailSendResult]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  EmailDraftResult copyWith({
+  EmailSendResult copyWith({
     bool? success,
     Object? error = _Undefined,
-    Object? draftReply = _Undefined,
-    Object? tone = _Undefined,
+    Object? scheduledTime = _Undefined,
+    Object? messageId = _Undefined,
   }) {
-    return EmailDraftResult(
+    return EmailSendResult(
       success: success ?? this.success,
       error: error is String? ? error : this.error,
-      draftReply: draftReply is String? ? draftReply : this.draftReply,
-      tone: tone is String? ? tone : this.tone,
+      scheduledTime:
+          scheduledTime is DateTime? ? scheduledTime : this.scheduledTime,
+      messageId: messageId is String? ? messageId : this.messageId,
     );
   }
 }

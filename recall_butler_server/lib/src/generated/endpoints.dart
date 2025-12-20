@@ -1052,6 +1052,31 @@ class Endpoints extends _i1.EndpointDispatch {
             additionalContext: params['additionalContext'],
           ),
         ),
+        'generateEmailDraft': _i1.MethodConnector(
+          name: 'generateEmailDraft',
+          params: {
+            'gmailId': _i1.ParameterDescription(
+              name: 'gmailId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'tone': _i1.ParameterDescription(
+              name: 'tone',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .generateEmailDraft(
+            session,
+            params['gmailId'],
+            params['tone'],
+          ),
+        ),
         'createGmailDraft': _i1.MethodConnector(
           name: 'createGmailDraft',
           params: {
@@ -1074,6 +1099,31 @@ class Endpoints extends _i1.EndpointDispatch {
                   .createGmailDraft(
             session,
             params['emailId'],
+            params['replyText'],
+          ),
+        ),
+        'sendEmailReply': _i1.MethodConnector(
+          name: 'sendEmailReply',
+          params: {
+            'gmailId': _i1.ParameterDescription(
+              name: 'gmailId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'replyText': _i1.ParameterDescription(
+              name: 'replyText',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .sendEmailReply(
+            session,
+            params['gmailId'],
             params['replyText'],
           ),
         ),
@@ -1230,6 +1280,37 @@ class Endpoints extends _i1.EndpointDispatch {
           ) async =>
               (endpoints['integration'] as _i8.IntegrationEndpoint)
                   .getDashboard(session),
+        ),
+        'scheduleEmailReply': _i1.MethodConnector(
+          name: 'scheduleEmailReply',
+          params: {
+            'gmailId': _i1.ParameterDescription(
+              name: 'gmailId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'replyText': _i1.ParameterDescription(
+              name: 'replyText',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'scheduledTime': _i1.ParameterDescription(
+              name: 'scheduledTime',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call: (
+            _i1.Session session,
+            Map<String, dynamic> params,
+          ) async =>
+              (endpoints['integration'] as _i8.IntegrationEndpoint)
+                  .scheduleEmailReply(
+            session,
+            params['gmailId'],
+            params['replyText'],
+            params['scheduledTime'],
+          ),
         ),
       },
     );

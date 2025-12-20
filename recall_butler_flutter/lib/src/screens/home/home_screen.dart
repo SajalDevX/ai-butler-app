@@ -8,6 +8,8 @@ import '../../providers/capture_provider.dart';
 import '../../theme/colors.dart';
 import '../../widgets/capture_card.dart';
 import '../capture/capture_detail_screen.dart';
+import '../alerts/critical_alerts_screen.dart';
+import '../emails/pending_replies_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -67,8 +69,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               actions: [
                 IconButton(
+                  icon: const Icon(Iconsax.message_edit),
+                  onPressed: _openPendingReplies,
+                  tooltip: 'Pending Replies',
+                ),
+                IconButton(
+                  icon: const Icon(Iconsax.danger),
+                  onPressed: _openCriticalAlerts,
+                  tooltip: 'Critical Alerts',
+                ),
+                IconButton(
                   icon: const Icon(Iconsax.notification),
                   onPressed: _showInsights,
+                  tooltip: 'Insights',
                 ),
               ],
             ),
@@ -171,6 +184,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ref.read(capturesProvider.notifier).deleteCapture(capture.id!);
           Navigator.pop(context);
         },
+      ),
+    );
+  }
+
+  void _openPendingReplies() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PendingRepliesScreen(),
+      ),
+    );
+  }
+
+  void _openCriticalAlerts() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CriticalAlertsScreen(),
       ),
     );
   }
