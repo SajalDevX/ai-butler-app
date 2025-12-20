@@ -1,5 +1,6 @@
 import 'package:recall_butler_server/src/birthday_reminder.dart';
 import 'package:recall_butler_server/src/future_calls/google_sync_future_call.dart';
+import 'package:recall_butler_server/src/future_calls/scheduled_email_future_call.dart';
 import 'package:recall_butler_server/src/services/encryption_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -57,6 +58,12 @@ void run(List<String> args) async {
   pod.registerFutureCall(
     MeetingPrepFutureCall(),
     MeetingPrepFutureCall.callName,
+  );
+
+  // Scheduled email future call
+  pod.registerFutureCall(
+    ScheduledEmailFutureCall(),
+    ScheduledEmailFutureCall.callName,
   );
 
   // You can schedule future calls for a later time during startup. But you can

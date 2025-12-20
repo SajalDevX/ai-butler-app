@@ -522,6 +522,68 @@ class GmailService {
     final draftData = jsonDecode(response.body) as Map<String, dynamic>;
     return draftData['id'] as String?;
   }
+
+  /// Send email reply directly (not as draft)
+  static Future<String?> sendReply(
+    Session session,
+    int userId,
+    String gmailId,
+    String replyBody,
+  ) async {
+    final accessToken = await GoogleAuthHelper.getValidAccessToken(session, userId);
+    if (accessToken == null) {
+      session.log('No valid access token for user $userId', level: LogLevel.error);
+      return null;
+    }
+
+    // Get original email for reply headers
+    final original = await EmailSummary.db.findFirstRow(
+      session,
+      where: (t) => t.gmailId.equals(gmailId),
+    );
+
+    if (original == null) {
+      session.log('Original email not found: $gmailId', level: LogLevel.error);
+      return null;
+    }
+
+    // Build RFC 2822 message
+    final message = StringBuffer();
+    message.writeln('To: ${original.fromEmail}');
+    message.writeln('Subject: Re: ${original.subject}');
+    message.writeln('In-Reply-To: <$gmailId>');
+    message.writeln('References: <$gmailId>');
+    message.writeln('Content-Type: text/plain; charset=UTF-8');
+    message.writeln();
+    message.writeln(replyBody);
+
+    // Base64url encode the message
+    final encodedMessage = base64Url.encode(utf8.encode(message.toString()));
+
+    // Send message
+    final response = await http.post(
+      Uri.parse('$_baseUrl/users/me/messages/send'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'raw': encodedMessage,
+        'threadId': original.threadId,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      session.log('Failed to send email: ${response.statusCode} ${response.body}', level: LogLevel.error);
+      return null;
+    }
+
+    final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+    final sentMessageId = responseData['id'] as String?;
+
+    session.log('Email sent successfully: $sentMessageId');
+    return sentMessageId;
+  }
 }
 
 /// Result of Gmail sync operation

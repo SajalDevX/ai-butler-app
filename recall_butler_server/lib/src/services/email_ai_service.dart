@@ -77,6 +77,25 @@ class EmailAIService {
           'requiresAction=${email.requiresAction}',
         );
 
+        // Auto-generate AI reply draft for important emails (importance >= 5) that require action
+        if (email.importanceScore >= 5 && email.requiresAction) {
+          try {
+            session.log('Auto-generating AI reply for email ${email.id} (importance ${email.importanceScore})');
+            final draft = await generateDraftReply(
+              session,
+              email.id!,
+              tone: 'professional', // Default to professional tone
+            );
+            if (draft != null) {
+              session.log('AI reply generated successfully for email ${email.id}');
+            } else {
+              session.log('Failed to generate AI reply for email ${email.id}', level: LogLevel.warning);
+            }
+          } catch (draftError) {
+            session.log('Error generating AI reply: $draftError', level: LogLevel.warning);
+          }
+        }
+
         // Send push notification for critical emails (priority >= 9)
         if (email.importanceScore >= PushNotificationService.criticalPriorityThreshold) {
           try {

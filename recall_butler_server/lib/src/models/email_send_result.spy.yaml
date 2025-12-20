@@ -1,0 +1,7 @@
+### Result of email send/schedule operation
+class: EmailSendResult
+fields:
+  success: bool
+  error: String?
+  scheduledTime: DateTime?
+  messageId: String?

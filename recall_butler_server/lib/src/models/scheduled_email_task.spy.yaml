@@ -1,0 +1,7 @@
+### Task data for scheduled email sending
+class: ScheduledEmailTask
+fields:
+  userId: int
+  gmailId: String
+  replyText: String
+  scheduledTime: DateTime
