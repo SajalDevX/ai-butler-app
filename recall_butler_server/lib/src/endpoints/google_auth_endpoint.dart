@@ -45,24 +45,40 @@ class GoogleAuthEndpoint extends Endpoint {
     }
 
     try {
+      // Build request body - only include redirect_uri if provided (not needed for mobile)
+      final requestBody = {
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'code': authCode,
+        'grant_type': 'authorization_code',
+      };
+
+      // Only add redirect_uri if it's not empty (web clients need it, mobile doesn't)
+      if (redirectUri.isNotEmpty) {
+        requestBody['redirect_uri'] = redirectUri;
+      }
+
       // Exchange code for tokens
       final response = await http.post(
         Uri.parse(_tokenEndpoint),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'client_id': clientId,
-          'client_secret': clientSecret,
-          'code': authCode,
-          'grant_type': 'authorization_code',
-          'redirect_uri': redirectUri,
-        },
+        body: requestBody,
       );
 
       if (response.statusCode != 200) {
         session.log('Token exchange failed: ${response.body}', level: LogLevel.error);
+        // Parse error details from Google
+        String errorMessage = 'Failed to exchange authorization code';
+        try {
+          final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+          final errorDesc = errorData['error_description'] ?? errorData['error'] ?? '';
+          if (errorDesc.toString().isNotEmpty) {
+            errorMessage = '$errorMessage: $errorDesc';
+          }
+        } catch (_) {}
         return GoogleAuthResult(
           success: false,
-          error: 'Failed to exchange authorization code',
+          error: errorMessage,
         );
       }
 

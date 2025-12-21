@@ -12,7 +12,20 @@
           "package_name": "com.recallbutler.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "962155967274-lt352gc258bgbjdtb4atq5iqgqn3hdu9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.recallbutler.app",
+            "certificate_hash": "69b9e6485437ee65489d97d088ce11a487279803"
+          }
+        },
+        {
+          "client_id": "962155967274-79oe4u2eme13mn4oaap7a2nc1estvnpu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDtVi3F5ns67iBICwdEH7gvMr_-aBIFRpQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962155967274-79oe4u2eme13mn4oaap7a2nc1estvnpu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

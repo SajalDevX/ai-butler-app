@@ -59,15 +59,36 @@ Future<void> main() async {
   await NotificationService().requestPermissions();
 
   // Initialize the Serverpod client
-  // For physical devices: Update this IP to your computer's local IP
-  // Find it with: hostname -I | awk '{print $1}'
-  const localNetworkIp = '10.22.225.69'; // <-- UPDATE THIS FOR YOUR NETWORK
+  // ==========================================================================
+  // SERVER CONFIGURATION
+  // ==========================================================================
+  // For PRODUCTION (AWS): Use the deployed server
+  // For DEVELOPMENT: Use your local network IP
+  //
+  // To run with production server:
+  //   flutter run --dart-define=USE_PRODUCTION=true
+  //
+  // To find your local IP: hostname -I | awk '{print $1}'
+  // ==========================================================================
 
-  // Priority: 1) SERVER_URL env var, 2) localNetworkIp for physical, 3) localhost helper for emulator
+  const useProduction = bool.fromEnvironment('USE_PRODUCTION', defaultValue: false);
+  const productionUrl = 'http://35.86.93.209:8080/';
+  const localNetworkIp = '10.22.225.69'; // <-- UPDATE THIS FOR LOCAL DEVELOPMENT
+
+  // Priority: 1) USE_PRODUCTION flag, 2) SERVER_URL env var, 3) local network IP
   const serverUrlFromEnv = String.fromEnvironment('SERVER_URL');
-  final serverUrl = serverUrlFromEnv.isNotEmpty
-      ? serverUrlFromEnv
-      : 'http://$localNetworkIp:8080/';
+  final String serverUrl;
+
+  if (useProduction) {
+    serverUrl = productionUrl;
+    debugPrint('🚀 Using PRODUCTION server: $productionUrl');
+  } else if (serverUrlFromEnv.isNotEmpty) {
+    serverUrl = serverUrlFromEnv;
+    debugPrint('🔧 Using custom SERVER_URL: $serverUrlFromEnv');
+  } else {
+    serverUrl = 'http://$localNetworkIp:8080/';
+    debugPrint('🏠 Using LOCAL server: $serverUrl');
+  }
 
   client = Client(
     serverUrl,
