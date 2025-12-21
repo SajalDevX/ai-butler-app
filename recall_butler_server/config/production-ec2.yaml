@@ -1,0 +1,43 @@
+# Production configuration for EC2 deployment (no SSL/domain)
+# This is for learning/testing purposes. For production, use HTTPS with a domain.
+
+# Configuration for the main API server.
+apiServer:
+  port: 8080
+  publicHost: 35.89.112.97
+  publicPort: 8080
+  publicScheme: http
+
+# Configuration for the Insights server.
+insightsServer:
+  port: 8081
+  publicHost: 35.89.112.97
+  publicPort: 8081
+  publicScheme: http
+
+# Configuration for the web server.
+webServer:
+  port: 8082
+  publicHost: 35.89.112.97
+  publicPort: 8082
+  publicScheme: http
+
+# Database connection to RDS
+database:
+  host: recall-butler-db.cfwoomoiipi1.us-west-2.rds.amazonaws.com
+  port: 5432
+  name: serverpod
+  user: postgres
+  requireSsl: true
+
+# Redis disabled for simplified deployment
+redis:
+  enabled: false
+  host: localhost
+  port: 6379
+
+maxRequestSize: 10485760 # 10MB
+
+sessionLogs:
+  consoleEnabled: true
+  consoleLogFormat: text

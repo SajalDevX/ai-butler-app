@@ -1,0 +1,18 @@
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to git (it contains secrets)
+
+project_name = "recall-butler"
+aws_region   = "us-west-2"
+
+# Database password - use a strong password!
+db_password = "YourSecurePassword123!"
+
+# Your SSH public key (from ~/.ssh/id_rsa.pub or generate new one)
+# Generate with: ssh-keygen -t rsa -b 4096 -f ~/.ssh/serverpod_key
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E... your-email@example.com"
+
+# EC2 instance type (t2.micro is free tier)
+instance_type = "t2.micro"
+
+# Amazon Linux 2 AMI for us-west-2 (update if using different region)
+instance_ami = "ami-0ca285d4c2cda3300"

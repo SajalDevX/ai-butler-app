@@ -41,10 +41,11 @@ class PushNotificationService {
 
     try {
       // Try different possible locations for the service account file
+      // Works for both local development and EC2 deployment
       final possiblePaths = [
         'config/firebase-service-account.json',
         '../config/firebase-service-account.json',
-        '/home/sajal/Desktop/Hackathons/serverpod_butler/recall_butler/recall_butler_server/config/firebase-service-account.json',
+        '/home/ec2-user/serverpod/config/firebase-service-account.json', // EC2 production
       ];
 
       for (final path in possiblePaths) {

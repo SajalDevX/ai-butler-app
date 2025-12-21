@@ -18,7 +18,7 @@ const List<String> _scopes = [
 /// Note: forceCodeForRefreshToken is required to get a refresh token from server-side exchange
 final _googleSignIn = GoogleSignIn(
   scopes: _scopes,
-  serverClientId: '251862626594-7r0ordn42nd28qd7jpeinqa5igrij8l2.apps.googleusercontent.com',
+  serverClientId: '962155967274-79oe4u2eme13mn4oaap7a2nc1estvnpu.apps.googleusercontent.com',
   forceCodeForRefreshToken: true,
 );
 

@@ -230,19 +230,36 @@ class GmailService {
     return data['historyId'] as String?;
   }
 
-  /// Save email to database
+  /// Save email to database (upsert - update if exists, insert if new)
   static Future<EmailSummary> _saveEmail(
     Session session,
     int userId,
     Map<String, dynamic> emailData,
   ) async {
+    final gmailId = emailData['id'] as String;
+
+    // Check if email already exists
+    final existingEmail = await EmailSummary.db.findFirstRow(
+      session,
+      where: (e) => e.gmailId.equals(gmailId),
+    );
+
     final headers = _parseHeaders(emailData);
     final body = _extractBody(emailData);
     final attachments = _getAttachments(emailData);
 
+    if (existingEmail != null) {
+      // Update existing email
+      existingEmail.isRead = _hasLabel(emailData, 'UNREAD') == false;
+      existingEmail.isArchived = _hasLabel(emailData, 'INBOX') == false;
+      existingEmail.updatedAt = DateTime.now();
+      return await EmailSummary.db.updateRow(session, existingEmail);
+    }
+
+    // Create new email
     final email = EmailSummary(
       userId: userId,
-      gmailId: emailData['id'] as String,
+      gmailId: gmailId,
       threadId: emailData['threadId'] as String,
       subject: headers['subject'] ?? '(No Subject)',
       fromEmail: headers['fromEmail'] ?? '',
